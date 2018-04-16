@@ -410,12 +410,9 @@ class Model():
 				"""
 			
 			# concat char and word
-			if config.use_char:
-
+			if config.use_char: # False , 그래서 여긴 패스
 				xsents = tf.concat([xsents,Asents],2)
 				xsents_neg = tf.concat([xsents_neg,Asents_neg],2)
-				
-
 			else:
 				xsents = Asents
 				xsents_neg = Asents_neg
@@ -425,12 +422,20 @@ class Model():
 
 				# [N] -> [N,idim]
 				# [N] -> [N,8,8,1536] if using conv feature
-				NP = tf.shape(self.pis)[0]
+				
+				# Tensor("dan/emb/image/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
+				NP = tf.shape(self.pis)[0] 
+				
+				# self.image_emb_mat : Tensor("dan/image_emb_mat:0", shape=(?, 14, 14, 2048), dtype=float32, device=/device:GPU:0)
+				# self.pis : Tensor("dan/pis:0", shape=(?,), dtype=int32, device=/device:GPU:0)
 				xpis = tf.nn.embedding_lookup(self.image_emb_mat,self.pis)
 				#tf.get_variable_scope().reuse_variables()
-
+				
+				# self.pis_neg: Tensor("dan/pis_neg:0", shape=(?,), dtype=int32, device=/device:GPU:0)
 				xpis_neg = tf.nn.embedding_lookup(self.image_emb_mat,self.pis_neg)
-
+					
+				# self.idim = [14, 14, 2048]
+				# 그래서 [-1]은 마지막 여기선 [2] = 2048
 				xpis = tf.reshape(xpis,[NP,-1,self.idim[-1]])
 				xpis_neg = tf.reshape(xpis_neg,[NP,-1,self.idim[-1]])
 					
