@@ -280,17 +280,17 @@ class Model():
 		self.sent_att_logits = tf.constant(-1) # the question attention logits if there is 
 		
 		# N = batch size
-		self.sents      = tf.placeholder('int32',[N, None],name="sents")
-		self.sents_c    = tf.placeholder("int32",[N, None, W],name="sents_c")
+		self.sents      = tf.placeholder('int32',[N, None],name="sents") # 문장
+		self.sents_c    = tf.placeholder("int32",[N, None, W],name="sents_c") # charactor, W = self.W = config.max_word_size = 16
 		self.sents_mask = tf.placeholder("bool",[N, None],name="sents_mask") # to get the sequence length
 
-		self.pis        = tf.placeholder('int32',[N],name="pis")
+		self.pis        = tf.placeholder('int32',[N],name="pis") # ?
 
 
 		# for training - 이게 어떤 의미?
-		self.pis_neg        = tf.placeholder('int32',[N],name="pis_neg")
-		self.sents_neg      = tf.placeholder('int32',[N, None],name="sents_neg")
-		self.sents_neg_c    = tf.placeholder("int32",[N, None, W],name="sents_neg_c") # W = self.W = config.max_word_size = 16
+		self.pis_neg        = tf.placeholder('int32',[N],name="pis_neg") # ?
+		self.sents_neg      = tf.placeholder('int32',[N, None],name="sents_neg") # 문장
+		self.sents_neg_c    = tf.placeholder("int32",[N, None, W],name="sents_neg_c") # charactor, W = self.W = config.max_word_size = 16
 		self.sents_neg_mask = tf.placeholder("bool",[N, None],name="sents_neg_mask") # to get the sequence length
 
 		
