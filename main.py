@@ -416,7 +416,9 @@ def train(config):
 	# also get the vocab size
 	config_vars = vars(config)
 	str_ = "threshold setting--\n" + "\t"+ " ,".join(["%s:%s"%(key,config_vars[key]) for key in config.thresmeta])
-	print str_
+	# threshold setting--
+        # sent_size_thres:200 ,word_size_thres:20
+	print str_		
 	self_summary_strs.append(str_)
 
 	# cap the numbers
@@ -424,17 +426,28 @@ def train(config):
 	update_config(config,[train_data,val_data],showMeta=True) # all word num is <= max_thres   
 
 	str_ = "renewed ----\n"+"\t" + " ,".join(["%s:%s"%(key,config_vars[key]) for key in config.maxmeta])
+	# renewed ----
+        # max_sent_size:82 ,max_word_size:16
 	print str_
 	self_summary_strs.append(str_)
 
 
 	# now we initialize the matrix for word embedding for word not in glove
 	word2vec_dict = train_data.shared['word2vec'] # empty if not use pre-train vector
+	# empty
+	# 실제값은 {}
+	
 	word2idx_dict = train_data.shared['word2idx'] # this is the word not in word2vec # for finetuning or not using word2vec then it is all the word 
-
+	# word to index 
+	# 실제값은  {...  'dominoes': 5919, 'sleeves': 6909, 'laundromat': 5920, 'sash': 5921}
+	
 	# we are not fine tuning , so this should be empty; empty if not use pretrain vector
 	# if finetuning , this will have glove
 	idx2vec_dict = {word2idx_dict[word]:vec for word,vec in word2vec_dict.items() if word in word2idx_dict}
+	# idx2vec_dict is empty
+	# 실제값은 {} 
+	
+	# len(idx2vec_dict):0,word_vocab_size:11798
 	print "len(idx2vec_dict):%s,word_vocab_size:%s"%(len(idx2vec_dict),config.word_vocab_size)
 
 	# config.word_vocab_size = len(train_data.shared['word2idx']) # the word not in word2vec
@@ -445,10 +458,10 @@ def train(config):
 
 	# random initial embedding matrix for new words
 	# this will take a long time when vocab_size is 6k
-	if not config.no_wordvec:
+	if not config.no_wordvec: # config.no_wordvec is True : 따라서, 여긴 진행하진 않는다.
 		config.emb_mat = np.array([idx2vec_dict[idx] if idx2vec_dict.has_key(idx) else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size)) for idx in xrange(config.word_vocab_size)],dtype="float32") 
 
-
+	# from model import get_model	
 	model = get_model(config) # construct model under gpu0
 
 	#for var in tf.trainable_variables():
