@@ -210,7 +210,10 @@ def get_args():
 def read_data(config,datatype,loadExistModelShared=False,subset=False): 
 	data_path = os.path.join(config.prepropath,"%s_data.p"%datatype)
 	shared_path = os.path.join(config.prepropath,"%s_shared.p"%datatype)
-
+	
+        # data_path = prepro/train_data.p, prepro/val_data.p 
+	# shared_path = prepro/train_shared.p, prepro/val_shared.p
+	
 	with open(data_path,"rb")as f:
 		data = pickle.load(f)
 	with open(shared_path,"rb") as f:
