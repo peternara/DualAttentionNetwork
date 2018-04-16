@@ -159,9 +159,16 @@ class Dataset():
 	# should return num_steps -> batches
 	# step is total/batchSize * epoch
 	# cap means limits max number of generated batches to 1 epoch
-	def get_batches(self,batch_size,num_steps=None,shuffle=True,no_img_feat=False,full=False):
+	def get_batches(self, batch_size, num_steps=None, shuffle=True, no_img_feat=False, full=False):
 
 		num_batches_per_epoch = int(math.ceil(self.num_examples / float(batch_size)))
+		# batch_size            = 256
+		# num_steps             = 34920 ? 
+		# shuffle               = True
+		# no_img_feat           = True
+		# full                  = False
+		# self.num_examples     = 148915
+		# num_batches_per_epoch = 512 ( ceil(581.69921875))
 
 		if full:
 			num_steps = num_batches_per_epoch
