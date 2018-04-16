@@ -12,6 +12,9 @@ VERY_NEGATIVE_NUMBER = -1e30
 def get_model(config):
 	# implement a multi gpu model?
 	with tf.name_scope(config.modelname), tf.device("/gpu:0"):
+		# config.modelname = "dan"
+		# so,
+		# "model_%s"%config.modelname = "model_dan"
 		model = Model(config,"model_%s"%config.modelname)
 
 	return model
