@@ -237,7 +237,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
         # data['data']의 구성은 (이미지 아이디, sentence의 word [], sentence word들의 character[[],])
 	# example) 1 unit > ('240696675', ['dog', 'running', 'on', 'narrow', 'dirt', 'path', '.'], [['d', 'o', 'g'], ['r', 'u', 'n', 'n', 'i', 'n', 'g'], ['o', 'n'], ['n', 'a', 'r', 'r', 'o', 'w'], ['d', 'i', 'r', 't'], ['p', 'a', 't', 'h'], ['.']]), 
 	num_examples = len(data['data']) # (imageId,sent,sentc) 
-	# num_examples = 5000
+	# num_examples = 148915(=학습 전체 이미지 29783개 x Caption 5, trainingset), 5000(valset)
  
 	"""
 	if(filter_data): # TODO: no filter implemented
