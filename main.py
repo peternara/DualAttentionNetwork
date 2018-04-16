@@ -309,7 +309,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 		# model_shared_path = models/dan/00/shared.p 의 이름으로 저장
 		#    shared['word2idx'] & shared['char2idx'] 순으로 데이터를 저장
 		#    see models/dan/00/shared.p 파일을 보면 알수 있다.
-		```
+'''
 (dp1
 S'word2idx'
 p2
@@ -325,7 +325,25 @@ p6
 I5923
 sS'both'
 p7
-```
+...
+sS'sash'
+p11760
+I5921
+ssS'char2idx'
+p11761
+(dp11762
+g638
+I1
+sS'!'
+I2
+sS'#'
+I3
+sS'%'
+I4
+sS'$'
+I5
+
+'''
 		# existing word in word2vec will be put after len(new word)+2
 		pickle.dump({"word2idx":shared['word2idx'],'char2idx':shared['char2idx']},open(model_shared_path,"wb"))
 
