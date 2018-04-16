@@ -281,23 +281,51 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 			shared['word2idx'] = {word:idx+2 for idx,word in enumerate([word for word,count in shared['word_counter'].items() if (count > config.word_count_thres) or shared['word2vec'].has_key(word)])}
 
 		else:
+			# 여길 진행 - word2vec가 아닌 실제로 raw 레벨(one hot)에서 embedding을 학습하는것같음
 			# the word larger than word_count_thres and not in the glove word2vec
 			# word2idx -> the idx is the wordCounter's item() idx 
 			# the new word to index
 			# 
 			shared['word2idx'] = {word:idx+2 for idx,word in enumerate([word for word,count in shared['word_counter'].items() if (count > config.word_count_thres) and not shared['word2vec'].has_key(word)])}
-
+                        # shared['word2idx'] : word to index
+			# example) {.....,'smilling': 11667, 'walk': 5774, 'packaging': 11668,....}
 
 		shared['char2idx'] = {char:idx+2 for idx,char in enumerate([char for char,count in shared['char_counter'].items() if count > config.char_count_thres])}
-		#print "len of shared['word2idx']:%s"%len(shared['word2idx']) 
-
+		# char to index
+		# example : {'!': 2, '#': 3, '%': 4, '$': 5, '&': 6, ',': 7, '.': 8, '1': 9, '0': 10, '3': 11, '2': 12, '5': 13, '4': 14, '7': 15, '6': 16, '9': 17, '8': 18, ';': 19, '?': 20, 'a': 22, 'c': 23, 'b': 21, 'e': 24, 'd': 25, 'g': 26, 'f': 27, 'i': 28, 'h': 29, 'k': 30, 'j': 31, 'm': 32, 'l': 33, 'o': 34, 'n': 35, 'q': 36, 'p': 37, 's': 38, 'r': 39, 'u': 40, 't': 41, 'w': 42, 'v': 43, 'y': 44, 'x': 45, 'z': 46}
+		
+		# print "len of shared['word2idx']:%s"%len(shared['word2idx']) 
+      		# len of shared['word2idx']:11796
+		# 학습셋에 사용되는 word의 수
+		
+		# NULL, 시작
 		NULL = "<NULL>"
-		UNK = "<UNK>"
+		UNK = "<UNK>" 
 		shared['word2idx'][NULL] = 0
 		shared['char2idx'][NULL] = 0
 		shared['word2idx'][UNK] = 1
 		shared['char2idx'][UNK] = 1
 
+		# model_shared_path = models/dan/00/shared.p 의 이름으로 저장
+		#    shared['word2idx'] & shared['char2idx'] 순으로 데이터를 저장
+		#    see models/dan/00/shared.p 파일을 보면 알수 있다.
+		```
+(dp1
+S'word2idx'
+p2
+(dp3
+S'raining'
+p4
+I2
+sS'writings'
+p5
+I5922
+sS'childern'
+p6
+I5923
+sS'both'
+p7
+```
 		# existing word in word2vec will be put after len(new word)+2
 		pickle.dump({"word2idx":shared['word2idx'],'char2idx':shared['char2idx']},open(model_shared_path,"wb"))
 
