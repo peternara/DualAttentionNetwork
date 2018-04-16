@@ -475,16 +475,22 @@ class Model():
 
 		with tf.variable_scope("reader"):
 			with tf.variable_scope("text"):
-				(fw_hs,bw_hs),(fw_ls,bw_ls) = tf.nn.bidirectional_dynamic_rnn(cell_text,cell_text,xsents,sequence_length=sents_len,dtype="float",scope="utext")
+				(fw_hs, bw_hs),(fw_ls, bw_ls) = tf.nn.bidirectional_dynamic_rnn(cell_text, cell_text, xsents, sequence_length=sents_len, dtype="float", scope="utext")
+				# fw_hs = Tensor("dan/reader/text/utext/fw/fw/transpose:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)
+				# bw_hs = Tensor("dan/reader/text/ReverseSequence:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)
+				# fw_ls = LSTMStateTuple(c=<tf.Tensor 'dan/reader/text/utext/fw/fw/while/Exit_2:0' shape=(?, 512) dtype=float32>, h=<tf.Tensor 'dan/reader/text/utext/fw/fw/while/Exit_3:0' shape=(?, 512) dtype=float32>)
+				# bw_ls = LSTMStateTuple(c=<tf.Tensor 'dan/reader/text/utext/bw/bw/while/Exit_2:0' shape=(?, 512) dtype=float32>, h=<tf.Tensor 'dan/reader/text/utext/bw/bw/while/Exit_3:0' shape=(?, 512) dtype=float32>)
+
+				
 				# concat the fw and backward lstm output
 				#hq = tf.concat([fw_hq,bw_hq],2)
 				if config.concat_rnn:
 					hs = tf.concat([fw_hs,bw_hs],2)
-					ls = tf.concat([fw_ls.h,bw_ls.h],2)
+					ls = tf.concat([fw_ls.h,bw_ls.h],2)  # 사용하지않음
 				else:
 					# this is the paper
 					hs = fw_hs+bw_hs 
-					ls = fw_ls.h+bw_ls.h
+					ls = fw_ls.h+bw_ls.h # 사용하지않음
 				
 				# addition, same as the paper
 
@@ -493,30 +499,36 @@ class Model():
 
 				tf.get_variable_scope().reuse_variables()
 
-				(fw_hs_neg,bw_hs_neg),(fw_ls_neg,bw_ls_neg) = tf.nn.bidirectional_dynamic_rnn(cell_text,cell_text,xsents_neg,sequence_length=sents_neg_len,dtype="float",scope="utext")
+				(fw_hs_neg, bw_hs_neg),(fw_ls_neg, bw_ls_neg) = tf.nn.bidirectional_dynamic_rnn(cell_text,cell_text,xsents_neg,sequence_length=sents_neg_len,dtype="float",scope="utext")
 				if config.concat_rnn:
 					hs_neg = tf.concat([fw_hs_neg,bw_hs_neg],2)
-					ls_neg = tf.concat([fw_ls_neg.h,bw_ls_neg.h],2)
+					ls_neg = tf.concat([fw_ls_neg.h,bw_ls_neg.h],2) # 사용하지않음
 				else:
 					hs_neg = fw_hs_neg+bw_hs_neg
-					ls_neg = fw_ls_neg.h+bw_ls_neg.h
+					ls_neg = fw_ls_neg.h+bw_ls_neg.h # 사용하지않음
 
-
+			# config.wd = 0.0005
 			if config.wd is not None: # l2 weight decay for the reader
 				add_wd(config.wd)
 
-
-		if config.concat_rnn:
+		if config.concat_rnn: # False, , 그래서 여긴 패스
 			d = 2*d
-
+		# d = 512
+		
+		# N = batch size
+		# J = # sentence size, Tensor("dan/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
+		# d = 512
+		##
 		# hs [N,J,d]
 		# hs_neg [N,J,d]
-
+		
+		# idim = [14, 14, 2048] 
+		##
 		# xpis [N,L,idim]
 		# xpis_neg [N,L,idim] 
 		with tf.variable_scope("dual_attention"):
 			# for training
-			s = []
+			s       = []
 			s_v_neg = []
 			s_u_neg = []
 
@@ -532,10 +544,10 @@ class Model():
 				# [N,d] / [N]
 				#u_0 = tf.truediv(tf.reduce_sum(hs,1), tf.expand_dims(tf.cast(sents_len,tf.float32),1))
 				#u_0_neg = tf.truediv(tf.reduce_sum(hs_neg,1),tf.expand_dims(tf.cast(sents_neg_len,tf.float32),1))
-				u_0 = tf.reduce_mean(hs,1)
+				u_0     = tf.reduce_mean(hs,1)
 				u_0_neg = tf.reduce_mean(hs_neg,1)
 
-				u_0 = tf.nn.dropout(u_0,keep_prob)
+				u_0     = tf.nn.dropout(u_0,keep_prob)
 				u_0_neg = tf.nn.dropout(u_0_neg,keep_prob)
 
 				#u_0 = ls
@@ -547,14 +559,14 @@ class Model():
 				# img
 				# [N,L,idim] -> [N,d]
 				with tf.variable_scope("img_0"):
-					v_0 = linear(tf.reduce_mean(xpis,1),output_size=d,add_tanh=True,ln=False,bias=True,bn=False,scope="img_p0")
+					v_0    = linear(tf.reduce_mean(xpis,1),output_size=d,add_tanh=True,ln=False,bias=True,bn=False,scope="img_p0")
 					tf.get_variable_scope().reuse_variables()
 					v_0_neg = linear(tf.reduce_mean(xpis_neg,1),output_size=d,ln=False,add_tanh=True,bias=True,bn=False,scope="img_p0")
 
-					v_0 = tf.nn.dropout(v_0,keep_prob)
+					v_0     = tf.nn.dropout(v_0,keep_prob)
 					v_0_neg = tf.nn.dropout(v_0_neg,keep_prob)
 
-				m_v = v_0
+				m_v     = v_0
 				m_v_neg = v_0_neg
 
 				z_v.append(v_0)
