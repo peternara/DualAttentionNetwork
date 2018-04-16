@@ -246,14 +246,23 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 			masks.append(data_filter(data,i,config,shared))
 		valid_idxs = [i for i in xrange(len(masks)) if masks[i]]
 	"""
+	
+	# trainset = 148915 이니 [0,,,,148914]
+	# valset = 5000 이니 [0,,,,4999]
 	valid_idxs = range(num_examples)
-
+        
+	# loaded 148915/148915 data points for train
+        # loaded 5000/5000 data points for val
 	print "loaded %s/%s data points for %s"%(len(valid_idxs),num_examples,datatype)
 
+	# 다음과 같이 생성되는 파일 및 디렉토리
+	#       ls models/dan/00/
+        #       best  save  shared.p
 	# this is the file for the model' training, with word ID and stuff, if set load in config, will read from existing, otherwise write a new one
 	model_shared_path = os.path.join(config.outpath,"shared.p") # note here the shared.p is for one specific model
-
-	if(loadExistModelShared):
+        # model_shared_path = models/dan/00/shared.p
+		
+	if(loadExistModelShared): # tain is loadExistModelShared=False
 		with open(model_shared_path,"rb") as f:
 			model_shared = pickle.load(f)
 		for key in model_shared:
@@ -262,6 +271,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 		if config.no_wordvec:
 			shared['word2vec'] = {}
 	else:
+		# train - train 과정에서 run - 생성
 		# no fine tuning of word vector
 		if config.no_wordvec:
 			shared['word2vec'] = {}
