@@ -225,14 +225,17 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 		imgid2featpath = os.path.join(config.prepropath,"%s_imgid2feat.npz"%datatype)
 		shared['imgid2feat'] = dict(np.load(imgid2featpath))
 	else:
-		assert config.feat_dim is not None
-		if type(config.feat_dim) == type("a"):
-			config.feat_dim = [int(one) for one in config.feat_dim.split(",")]
-		shared['featpath'] = config.featpath
+		#  위 말고 여기를 통과
+		assert config.feat_dim is not None # config.feat_dim : [14, 14, 2048] 
+		if type(config.feat_dim) == type("a"): # 여길 통과하지 않음. 다만 string 값으로 주어지는듯
+			config.feat_dim = [int(one) for one in config.feat_dim.split(",")] 
+		
+		shared['featpath'] = config.featpath # config.featpath = resnet-152
 		#shared['featCache'] = {}
 		#shared['cacheSize'] = 0 # one for train and one for val
 
-	num_examples = len(data['data']) # (imageId,sent,sentc)
+	num_examples = len(data['data']) # (imageId,sent,sentc) 
+	# num_examples = 5000
 
 	"""
 	if(filter_data): # TODO: no filter implemented
