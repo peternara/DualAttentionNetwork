@@ -258,38 +258,45 @@ class Model():
 
 		# get all the dimension here
 		#N = self.N = config.batch_size
-		N = self.N = None
+		N = self.N = None # batch size
 		
-		VW = self.VW = config.word_vocab_size
-		VC = self.VC = config.char_vocab_size
-		W = self.W = config.max_word_size
+		VW = self.VW = config.word_vocab_size # 11798
+		VC = self.VC = config.char_vocab_size # 47
+		W  = self.W = config.max_word_size    # 16
 
 		# embedding dim
-		self.cd,self.wd,self.cwd = config.char_emb_size,config.word_emb_size,config.char_out_size
+		self.cd, self.wd, self.cwd = config.char_emb_size,config.word_emb_size,config.char_out_size
+		# self.cd = 8 , char_emb_size
+		# self.wd = 512 , word_emb_size
+		# self.cwd = 100 , char_out_size(?)
 
 		# image dimension
-		self.idim = config.imgfeat_dim
-
+		self.idim = config.imgfeat_dim # [14, 14, 2048] : conv feature map
 	
+		
+		# Tensor("dan/Const:0", shape=(), dtype=int32, device=/device:GPU:0)
 		self.img_att_logits = tf.constant(-1) # the 3d attention logits
+		# Tensor("dan/Const_1:0", shape=(), dtype=int32, device=/device:GPU:0)
 		self.sent_att_logits = tf.constant(-1) # the question attention logits if there is 
 		
-		self.sents = tf.placeholder('int32',[N,None],name="sents")
-		self.sents_c = tf.placeholder("int32",[N,None,W],name="sents_c")
-		self.sents_mask = tf.placeholder("bool",[N,None],name="sents_mask") # to get the sequence length
+		#
+		self.sents      = tf.placeholder('int32',[N, None],name="sents")
+		self.sents_c    = tf.placeholder("int32",[N, None, W],name="sents_c")
+		self.sents_mask = tf.placeholder("bool",[N, None],name="sents_mask") # to get the sequence length
 
 		self.pis = tf.placeholder('int32',[N],name="pis")
 
 
-		# for training
-		self.pis_neg = tf.placeholder('int32',[N],name="pis_neg")
-		self.sents_neg = tf.placeholder('int32',[N,None],name="sents_neg")
-		self.sents_neg_c = tf.placeholder("int32",[N,None,W],name="sents_neg_c")
-		self.sents_neg_mask = tf.placeholder("bool",[N,None],name="sents_neg_mask") # to get the sequence length
+		# for training - 이게 어떤 의미?
+		self.pis_neg        = tf.placeholder('int32',[N],name="pis_neg")
+		self.sents_neg      = tf.placeholder('int32',[N, None],name="sents_neg")
+		self.sents_neg_c    = tf.placeholder("int32",[N, None, W],name="sents_neg_c") # W = self.W = config.max_word_size = 16
+		self.sents_neg_mask = tf.placeholder("bool",[N, None],name="sents_neg_mask") # to get the sequence length
 
 		
 		# feed in the pretrain word vectors for all batch
-		self.existing_emb_mat = tf.placeholder('float',[None,config.word_emb_size],name="pre_emb_mat")
+		# config.word_emb_size = 512
+		self.existing_emb_mat = tf.placeholder('float',[None, config.word_emb_size], name="pre_emb_mat")
 
 		# feed in the image feature for this batch
 		# [photoNumForThisBatch,image_dim]
