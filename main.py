@@ -208,21 +208,19 @@ def get_args():
 
 
 def read_data(config,datatype,loadExistModelShared=False,subset=False): 
-	data_path = os.path.join(config.prepropath,"%s_data.p"%datatype)
-	shared_path = os.path.join(config.prepropath,"%s_shared.p"%datatype)
+	data_path = os.path.join(config.prepropath,"%s_data.p"%datatype) # prepro/train_data.p, prepro/val_data.p
+	shared_path = os.path.join(config.prepropath,"%s_shared.p"%datatype) # prepro/train_shared.p, prepro/val_shared.p
 	
-        # data_path = prepro/train_data.p, prepro/val_data.p 
-	# shared_path = prepro/train_shared.p, prepro/val_shared.p
-	
-	with open(data_path,"rb")as f:
+	with open(data_path,"rb")as f: # prepro/train_data.p, prepro/val_data.p
 		data = pickle.load(f)
-	with open(shared_path,"rb") as f:
+	with open(shared_path,"rb") as f: # prepro/train_shared.p, prepro/val_shared.p
 		shared = pickle.load(f) # this will be added later with word id, either new or load from exists
 
 	# load the imgid2feat from separate npz file
 	shared['imgid2feat'] = None
 	shared['featpath'] = None
 
+	# config.featpath = resnet-152/, 미리 뽑은 image feature 디렉토리
 	if config.featpath is None:
 		imgid2featpath = os.path.join(config.prepropath,"%s_imgid2feat.npz"%datatype)
 		shared['imgid2feat'] = dict(np.load(imgid2featpath))
