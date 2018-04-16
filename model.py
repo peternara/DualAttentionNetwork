@@ -279,12 +279,12 @@ class Model():
 		# Tensor("dan/Const_1:0", shape=(), dtype=int32, device=/device:GPU:0)
 		self.sent_att_logits = tf.constant(-1) # the question attention logits if there is 
 		
-		#
+		# N = batch size
 		self.sents      = tf.placeholder('int32',[N, None],name="sents")
 		self.sents_c    = tf.placeholder("int32",[N, None, W],name="sents_c")
 		self.sents_mask = tf.placeholder("bool",[N, None],name="sents_mask") # to get the sequence length
 
-		self.pis = tf.placeholder('int32',[N],name="pis")
+		self.pis        = tf.placeholder('int32',[N],name="pis")
 
 
 		# for training - 이게 어떤 의미?
@@ -322,8 +322,8 @@ class Model():
 		config = self.config
 		VW = self.VW
 		VC = self.VC
-		W = self.W
-		N = self.N
+		W  = self.W
+		N  = self.N
 		
 		J = tf.shape(self.sents)[1] # sentence size
 		d = config.hidden_size
