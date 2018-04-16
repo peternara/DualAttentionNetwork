@@ -351,8 +351,9 @@ class Model():
 
 		# embedding
 		with tf.variable_scope('emb'):
+			
 			# char stuff
-			if config.use_char:
+			if config.use_char: # false, 그래서 여긴 패스
 			#with tf.variable_scope("char"):
 				# [char_vocab_size,char_emb_dim]
 				with tf.variable_scope("var"), tf.device("/cpu:0"): 
@@ -360,10 +361,8 @@ class Model():
 
 				# the embedding for each of character 
 				# [N,J,W,cdim]
-				Asents_c = tf.nn.embedding_lookup(char_emb,self.sents_c)
+				Asents_c     = tf.nn.embedding_lookup(char_emb,self.sents_c)
 				Asents_neg_c = tf.nn.embedding_lookup(char_emb,self.sents_neg_c)
-				
-
 				
 				#char CNN
 				filter_size = cwdim # output size for each word
@@ -380,10 +379,11 @@ class Model():
 				
 				with tf.variable_scope("var"), tf.device("/cpu:0"):
 					# get the word embedding for new words
-					if config.is_train:
+					if config.is_train: # True
 						# for new word
-						if config.no_wordvec:
-							word_emb_mat = tf.get_variable("word_emb_mat",dtype="float",shape=[VW,wdim],initializer=tf.truncated_normal_initializer(stddev=1.0))
+						if config.no_wordvec: # True
+							# [VW, wdim] = [11798, 512] = [word_vocab_size, word_emb_size]
+							word_emb_mat = tf.get_variable("word_emb_mat",dtype="float",shape=[VW, wdim],initializer=tf.truncated_normal_initializer(stddev=1.0))
 						else:
 							word_emb_mat = tf.get_variable("word_emb_mat",dtype="float",shape=[VW,wdim],initializer=get_initializer(config.emb_mat)) # it's just random initialized, but will include glove if finetuning
 					else: # save time for loading the emb during test
@@ -391,12 +391,17 @@ class Model():
 					# concat with pretrain vector
 					# so 0 - VW-1 index for new words, the rest for pretrain vector
 					# and the pretrain vector is fixed
+					# config.finetune_wordvec = False & config.no_wordvec = True, 그래서 여긴 패스
 					if not config.finetune_wordvec and not config.no_wordvec:
 						word_emb_mat = tf.concat([word_emb_mat,self.existing_emb_mat],0)
 
 				#[N,J,wdim]
-				Asents = tf.nn.embedding_lookup(word_emb_mat,self.sents)
+				# word_emb_mat   = <tf.Variable 'emb/word/var/word_emb_mat:0' shape=(11798, 512) dtype=float32_ref>
+				# self.sents     = Tensor("dan/sents:0", shape=(?, ?), dtype=int32, device=/device:GPU:0)
+				# self.sents_neg = Tensor("dan/sents_neg:0", shape=(?, ?), dtype=int32, device=/device:GPU:0)
+				Asents = tf.nn.embedding_lookup(word_emb_mat,self.sents)				 
 				Asents_neg = tf.nn.embedding_lookup(word_emb_mat,self.sents_neg)
+				
 				"""
 				# need one-hot representation of sents
 				Asents = linear(self.sents,output_size=wdim,scope="word_emb",bias=False,add_tanh=False)
