@@ -303,6 +303,7 @@ class Model():
 		# now image feature could be a conv feature tensor instead of vector
 		#self.image_emb_mat = tf.placeholder("float",[None,config.imgfeat_size],name="image_emb_mat")
 		self.image_emb_mat = tf.placeholder("float",[None]+config.imgfeat_dim,name="image_emb_mat")
+		# [None]+config.imgfeat_dim = [None, 14, 14, 2048]
 
 		# used for drop out switch
 		self.is_train = tf.placeholder('bool', [], name='is_train')
@@ -319,22 +320,34 @@ class Model():
 		self.build_loss()
 
 	def build_forward(self):
+		
 		config = self.config
 		VW = self.VW
 		VC = self.VC
 		W  = self.W
 		N  = self.N
 		
-		J = tf.shape(self.sents)[1] # sentence size
-		d = config.hidden_size
-		if config.concat_rnn:
+		# VW = 11798, word_vocab_size 
+		# VC = 47, char_vocab_size 
+		# W  = 16, max_word_size    
+		# N  = None, batch size
+		
+		J = tf.shape(self.sents)[1] # sentence size, Tensor("dan/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0) 
+		d = config.hidden_size # 512
+		
+		if config.concat_rnn: # False
 			d = 2*d
-
+		# d : 512
+		
 		# embeding size
-		cdim,wdim,cwdim = self.cd,self.wd,self.cwd #cwd: char -> word output dimension
+		cdim, wdim, cwdim = self.cd, self.wd, self.cwd 
+		# cdim  = 8 , config.char_emb_size
+		# wdim  = 512 , config.word_emb_size
+		# cwdim = 100, cwd: config.char_out_size
+
 		# image feature dim
 		idim = self.idim # image_feat dimension # it is a list, [1536] or [8,8,1536]
-
+		# 실제로는 [14, 14, 2048]
 
 		# embedding
 		with tf.variable_scope('emb'):
