@@ -436,7 +436,7 @@ class Model():
 					
 				# self.idim = [14, 14, 2048]
 				# 그래서 [-1]은 마지막 여기선 [2] = 2048
-				xpis = tf.reshape(xpis,[NP,-1,self.idim[-1]])
+				xpis     = tf.reshape(xpis,[NP,-1,self.idim[-1]])
 				xpis_neg = tf.reshape(xpis_neg,[NP,-1,self.idim[-1]])
 					
 			
@@ -454,18 +454,24 @@ class Model():
 		
 
 		# LSTM / GRU?
+		# config.hidden_size = 512
 		cell_text = tf.nn.rnn_cell.BasicLSTMCell(config.hidden_size,state_is_tuple=True)
 		#cell_text = tf.nn.rnn_cell.GRUCell(d)
 		# add dropout
+		# self.is_train : Tensor("dan/is_train:0", shape=(), dtype=bool, device=/device:GPU:0)
+		# config.keep_prob = 0.5
 		keep_prob = tf.cond(self.is_train,lambda:tf.constant(config.keep_prob),lambda:tf.constant(1.0))
-
+		# keep_prob : Tensor("dan/cond/Merge:0", shape=(), dtype=float32, device=/device:GPU:0)
+	
 		cell_text = tf.nn.rnn_cell.DropoutWrapper(cell_text,keep_prob)
 
-
 		# sequence length for each
-		sents_len = tf.reduce_sum(tf.cast(self.sents_mask,"int32"),1) # [N] 
+		sents_len     = tf.reduce_sum(tf.cast(self.sents_mask,"int32"),1) # [N] , N = batch size
 		sents_neg_len = tf.reduce_sum(tf.cast(self.sents_neg_mask,"int32"),1) # [N] 
-		
+		# self.sents_mask     = Tensor("dan/sents_mask:0", shape=(?, ?), dtype=bool, device=/device:GPU:0)
+		# self.sents_neg_mask = Tensor("dan/sents_neg_mask:0", shape=(?, ?), dtype=bool, device=/device:GPU:0)
+		# sents_len           = Tensor("dan/Sum:0", shape=(?,), dtype=int32, device=/device:GPU:0)
+		# sents_neg_len       = Tensor("dan/Sum_1:0", shape=(?,), dtype=int32, device=/device:GPU:0)
 
 		with tf.variable_scope("reader"):
 			with tf.variable_scope("text"):
