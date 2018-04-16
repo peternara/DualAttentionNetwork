@@ -233,10 +233,12 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 		shared['featpath'] = config.featpath # config.featpath = resnet-152
 		#shared['featCache'] = {}
 		#shared['cacheSize'] = 0 # one for train and one for val
-
+       
+        # data['data']의 구성은 (이미지 아이디, sentence의 word [], sentence word들의 character[[],])
+	# example) 1 unit > ('240696675', ['dog', 'running', 'on', 'narrow', 'dirt', 'path', '.'], [['d', 'o', 'g'], ['r', 'u', 'n', 'n', 'i', 'n', 'g'], ['o', 'n'], ['n', 'a', 'r', 'r', 'o', 'w'], ['d', 'i', 'r', 't'], ['p', 'a', 't', 'h'], ['.']]), 
 	num_examples = len(data['data']) # (imageId,sent,sentc) 
 	# num_examples = 5000
-
+ 
 	"""
 	if(filter_data): # TODO: no filter implemented
 		masks = []
