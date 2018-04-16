@@ -220,7 +220,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 	shared['imgid2feat'] = None
 	shared['featpath'] = None
 
-	# config.featpath = resnet-152/, 미리 뽑은 image feature 디렉토리
+	# config.featpath = resnet-152/, 미리 뽑은 image feature 디렉토리,  3217909454.npy
 	if config.featpath is None:
 		imgid2featpath = os.path.join(config.prepropath,"%s_imgid2feat.npz"%datatype)
 		shared['imgid2feat'] = dict(np.load(imgid2featpath))
