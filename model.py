@@ -233,8 +233,26 @@ def V_att(v_t,m_v,wd=None,scope=None,reuse=False,use_concat=False,bn=False,is_tr
 
 class Model():
 	def __init__(self,config,scope):
-		self.scope = scope
+		
+		# model_dan
+		self.scope  = scope
+		
+		# config의 내용
+		# Namespace(batch_norm=False, batch_size=256, char_count_thres=10, char_emb_size=8, char_out_size=100, 
+		# char_vocab_size=47, clip_gradient_norm=0.1, concat_att=False, concat_rnn=False, feat_dim=[14, 14, 2048], 
+		# featpath='resnet-152/', finetune_wordvec=False, hidden_size=512, hn_num=32, ignore_vars=None, imgfeat_dim=[14, 14, 2048], 
+		# init_lr=0.1, is_pack_model=False, is_save_vis=False, is_save_weights=False, is_test=False, is_test_on_val=False, 
+		# is_train=True, keep_prob=0.5, learning_rate_decay=0.95, learning_rate_decay_examples=500000, load=False, load_best=False, 
+		# load_from=None, margin=100.0, max_sent_size=82, max_word_size=16, maxmeta=('max_sent_size', 'max_word_size'), modelname='dan', 
+		# no_wordvec=True, num_epochs=60, num_hops=2, optimizer='momentum', outbasepath='models', outpath='models/dan/00', 
+		# pack_model_note=None, pack_model_path=None, prepropath='prepro', record_val_perf=True, runId=0, save_answers=False, 
+		# save_dir='models/dan/00/save', save_dir_best='models/dan/00/best', save_dir_best_model='models/dan/00/best/save-best', 
+		# save_dir_model='models/dan/00/save/save', save_period=1000, self_summary_path='models/dan/00/train_sum.txt', sent_size_thres=200, 
+		# thresmeta=('sent_size_thres', 'word_size_thres'), use_char=False, val_path='', val_perf_path='models/dan/00/val_perf.p', wd=0.0005, 
+		# word_count_thres=1, word_emb_size=512, word_size_thres=20, word_vocab_size=11798, write_self_sum=True)
 		self.config = config
+		
+		
 		# a step var to keep track of current training process
 		self.global_step = tf.get_variable('global_step',shape=[],dtype='int32',initializer=tf.constant_initializer(0),trainable=False) # a counter
 
