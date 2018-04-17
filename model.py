@@ -240,32 +240,56 @@ def T_att(u_t, m_u, u_t_mask, wd=None, scope=None ,reuse=False, use_concat=False
 #v_t -> [N,L,idim]
 # m_v -> [N,d]
 def V_att(v_t,m_v,wd=None,scope=None,reuse=False,use_concat=False,bn=False,is_train=None,keep_prob=None):
+	
+	# v_t : image vector 
+	#       (?, ?, 2048) > ? (batch, 14x14, 2048)
+	# m_v : image 관련 memory vector
+	#       (?, 512) > (batch, 512)
+	
 	with tf.variable_scope(scope or "v_att"):
 		if reuse:
 			tf.get_variable_scope().reuse_variables()
 
-		d = m_v.get_shape()[-1] 
-		L = tf.shape(v_t)[1]
+		d = m_v.get_shape()[-1] # 512
+		L = tf.shape(v_t)[1] # 14x14? , Tensor("dan/dual_attention/v_att_1_1/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
 
-		if use_concat:
+		if use_concat: # False, 그냥 패스
 			# tile m_v first
 			m_v_aug = tf.tile(tf.expand_dims(m_v,1),[1,L,1])
 			v_t_tran = linear(v_t,ln=False,add_tanh=True,output_size=d,wd=wd,scope="W_v",bn=bn,is_train=is_train) # [N,L,d]
 			a_v = linear(tf.concat([v_t_tran*m_v_aug,(v_t_tran-m_v_aug)*(v_t_tran-m_v_aug)],2),ln=False,add_tanh=True,output_size=1,scope="att_logits",bn=bn,is_train=is_train)
-			a_v = tf.squeeze(a_v,2)
-
+			a_v = tf.squeeze(a_v,2)		
 		else:
 			if keep_prob is not None:
-				v_t = tf.nn.dropout(v_t,keep_prob)
-			W_v = linear(v_t,ln=False,add_tanh=True,output_size=d,wd=wd,scope="W_v",bn=bn,is_train=is_train) # [N,L,d]
+				v_t = tf.nn.dropout(v_t,keep_prob)				
+			
+			W_v = linear(v_t, ln=False, add_tanh=True, output_size=d, wd=wd, scope="W_v", bn=bn, is_train=is_train) # [N,L,d]
+			# v_t = (batch, 14x14, 2048)
+			# W_v = (?, ?, 512) >  (batch, 14x14, 512)
+			
 			if keep_prob is not None:
 				m_v = tf.nn.dropout(m_v,keep_prob)
+				
 			W_v_m =linear(m_v,ln=False,add_tanh=True,output_size=d,wd=wd,scope="W_v_m",bn=bn,is_train=is_train)# [N,d]
+			# m_v   = (batch, 512)
+			# W_v_m =  (?, 512) > (batch, 512)
+			
 			W_v_m = tf.tile(tf.expand_dims(W_v_m,1),[1,L,1])
-			h_v = W_v * W_v_m #[N,L,d]
+			# W_v_m = <bound method Tensor.get_shape of <tf.Tensor 'dan/dual_attention/v_att_1_1/Tile:0' shape=(?, ?, 512) dtype=float32>>
+			# 마찬가지로 element wise mul ,  두 tensor 모두 같은 차원으로 만들어야한다.
+			# 	(batch, 14x14, 512) > 512 차원은 같은 값을 가진 벡터를 14x14 개 만든다.
+			
+			h_v = W_v * W_v_m #[N,L,d],  
+			#  element wise mul 			
+			#  h_v = <bound method Tensor.get_shape of <tf.Tensor 'dan/dual_attention/v_att_1_1/mul:0' shape=(?, ?, 512) dtype=float32>>
+			
+		
 			# [N,L,1]
-			a_v = linear(h_v,ln=False,output_size=1,wd=wd,add_tanh=False,scope="W_v_h",bn=bn,bias=False,is_train=is_train)
+			a_v = linear(h_v, ln=False,output_size=1,wd=wd,add_tanh=False,scope="W_v_h",bn=bn,bias=False,is_train=is_train)
+			# a_v = (?, ?, 1)
+			
 			a_v = tf.squeeze(a_v,2)
+			# a_v = (?, ?)
 
 		v = softsel(v_t,a_v,hard=False) #[N,L,idim]
 		v = linear(v,ln=False,add_tanh=True,output_size=d,wd=wd,scope="P_v",bn=bn,is_train=is_train)
