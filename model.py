@@ -487,14 +487,14 @@ class Model():
 				
 				# concat the fw and backward lstm output
 				#hq = tf.concat([fw_hq,bw_hq],2)
-				if config.concat_rnn:
+				if config.concat_rnn: # False, 그래서 여긴 패스
 					hs = tf.concat([fw_hs,bw_hs],2)
 					ls = tf.concat([fw_ls.h,bw_ls.h],2)  # 사용하지않음
 				else:
 					# this is the paper
 					hs = fw_hs+bw_hs 
 					ls = fw_ls.h+bw_ls.h # 사용하지않음
-				
+				# hs : Tensor("dan/reader/text/add:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)
 				# addition, same as the paper
 
 				#lq = tf.concat([fw_lq.h,bw_lq.h],1) #LSTM CELL
@@ -517,14 +517,16 @@ class Model():
 		if config.concat_rnn: # False, , 그래서 여긴 패스
 			d = 2*d
 		# d = 512
-		
 		# N = batch size
 		# J = # sentence size, Tensor("dan/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
 		# d = 512
 		##
 		# hs [N,J,d] = (?, ?, 512)
 		# hs_neg [N,J,d]
-		
+		##
+		# 마지막 결과인 hs vs xpis는            
+		# 여기서 중요한것은 이미지와 텍스트의 최종 dimension(512)을 맞춰주는것이다.
+		#   - memrory vector 구하기위해 [batch, 512]로 평균을 구하면서 맞춰준다.     
 		
 		# idim = [14, 14, 2048] 
 		##
