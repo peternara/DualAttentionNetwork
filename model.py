@@ -37,24 +37,35 @@ def softmax(logits,scope=None):
 # return target * softmax(logits)
 # target: [ ..., J, d]
 # logits: [ ..., J]
-
 # so [N,M,dim] * [N,M] -> [N,dim], so [N,M] is the attention for each M
-
 # return: [ ..., d] # so the target vector is attended with logits' softmax
 # [N,M,JX,JQ,2d] * [N,M,JX,JQ] (each context to query's mapping) -> [N,M,JX,2d] # attened the JQ dimension
-def softsel(target,logits,hard=False,hardK=None,scope=None):
+def softsel( target, logits, hard=False, hardK=None, scope=None):	
+	# logits = [N, J]   = [batch, voc_size]
+	# target = [N,J,D] = [batch, voc_size, 512]	
 	with tf.variable_scope(scope or "softsel"): # there is no variable to be learn here
 		
 		# hard attention, will only leave topk weights
-		if hard:
+		if hard: # False, 패스
 			assert hardK > 0
 			logits = leaveK(logits,hardK,scope="%s_topk"%(scope or "softsel"))
 		
 		a = softmax(logits) # shape is the same
-
+		# a : <bound method Tensor.get_shape of <tf.Tensor 'dan/dual_attention/v_att_1/softsel/softmax/Reshape_1:0' shape=(?, ?) dtype=float32>>
+		# 아마도 [N, J]가 나와야할듯 왜냐면 text attention이니 어떤 단어가 attention 되어 있는지의 결과를 알려면 
+		#     전체 voc size크기의 안에서 weight값이 존재해야한다고 생각
 		
 		target_rank = len(target.get_shape().as_list())
+		# ? target_rank = 3 : 3차원 tensor(=shape 3 차원)의 길이는 3
+		
 		# [N,M,JX,JQ,2d] elem* [N,M,JX,JQ,1]
+		# a x target 하려고 보니,
+		#   a = [N, J]
+		#   target = [N, J, D]		
+		#   그래서, a를 tf.expand_dims(a,-1) : (?, ?, 1) # 끝에 하나 늘려서 계산이 가능하도록 함
+		#   이는, attention된 단어들에 대해 weight하겠다는 의미이고
+		#  	 a는 attention weight
+		#   
 		return tf.reduce_sum(tf.expand_dims(a,-1)*target,target_rank-2) # second last dim
 
 
@@ -216,10 +227,13 @@ def T_att(u_t, m_u, u_t_mask, wd=None, scope=None ,reuse=False, use_concat=False
 		#    u_t_mask = [1,   0,   0, 0,  0, 0,  0, 0, 1, 0]
 		#    a_u      = [1.2, 3, 4.3, 6,  8, 9, 19, 1, 2, 0]
 		#        so,    [1.2, 0, 0, 0,  0, 0, 0, 0, 2, 0] = exp_mask( a_u, u_t_mask)
+		#              > 실제 0은 -1e30 으로 채워지는듯 
 		# u_t_mask : <bound method Tensor.get_shape of <tf.Tensor 'dan/sents_neg_mask:0' shape=(?, ?) dtype=bool>>
 		a_u = exp_mask(a_u, u_t_mask)
 
-		# [N,d]
+		# a_u = [N,J]
+		# u_t = [N,J,D] = (batch,문장안의 word size = vocabulary sze, 512)
+		# [N,d]		
 		u = softsel(u_t, a_u, hard=False)
 	return u
 
@@ -642,11 +656,19 @@ class Model():
 			# attention 
 			############################################################################################################
 			for i in xrange(config.num_hops):
-				# text
-				# [N,d]
-				u = T_att(hs,m_u,self.sents_mask,use_concat=config.concat_att,wd=config.wd,scope="t_att_%s"%i,bn=config.batch_norm,is_train=self.is_train,keep_prob=keep_prob)
+				
+				############################################################################################################
+				# text attention
+				############################################################################################################
+				# u = [N,d] = (?, 512)
+				# hs : text encoder(bi-lstm)의 결과 [N, J, D]
+				# m_u : text memory vector [N, J]
+				u = T_att(hs, m_u,self.sents_mask,use_concat=config.concat_att,wd=config.wd,scope="t_att_%s"%i,bn=config.batch_norm,is_train=self.is_train,keep_prob=keep_prob)
 				z_u.append(u)		
-
+				
+				############################################################################################################
+				# image attention
+				############################################################################################################
 				# img
 				v = V_att(xpis,m_v,wd=config.wd,use_concat=config.concat_att,scope="v_att_%s"%i,bn=config.batch_norm,is_train=self.is_train,keep_prob=keep_prob)
 				z_v.append(v)
