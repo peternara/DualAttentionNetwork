@@ -550,9 +550,9 @@ class Model():
 			#  - 초기값은 평균벡터 conv feature와 text bi-lstm의 평균 
 			#  - 평균이란 의미는 nx512(batch 제외)를 512 차원으로 줄여야하는데 그럴려면 n을 1 dim으로, 즉 평균으로 하여 구하여, 
 			#    이를 하나씩, 512번하는 형태인 512(1x512)형태로 만든다. 
-			#    그래서, (b,n,512)-> (b,512) 형태로 만들기위해,
+			#    그래서, (b,n,512)-> (b,512) 형태로 만들기위해, 
 			#              텍스트 정보는 tf.reduce_mean(hs,1): 1 > axis=1이고 n->1               
-			#              이미지 정보는 fc(linear)로 (batch, ?, 2048) > (b,512)           
+			#               이미지 정보는 fc(linear)로 (batch, ?, 2048) > (b,512)           
 			############################################################################################################
 			with tf.variable_scope("mem_init"):
 				# text
@@ -579,7 +579,8 @@ class Model():
 				with tf.variable_scope("img_0"):
 					# linear : fully-connected layer
 					# xpis : (?, ?, 2048)
-					v_0    = linear(tf.reduce_mean(xpis,1),output_size=d,add_tanh=True,ln=False,bias=True,bn=False,scope="img_p0")
+					# 실제 이미지정보는 여기서 맞춰준다. (batch, ?, 2048) > (b,512) 
+					v_0    = linear(tf.reduce_mean(xpis,1), output_size=d, add_tanh=True,ln=False,bias=True,bn=False,scope="img_p0")
 					# v_0 : (?, 512)
 					tf.get_variable_scope().reuse_variables()
 					v_0_neg = linear(tf.reduce_mean(xpis_neg,1),output_size=d,ln=False,add_tanh=True,bias=True,bn=False,scope="img_p0")
@@ -592,7 +593,13 @@ class Model():
 
 				z_v.append(v_0)
 				z_u.append(u_0)
-
+				
+				############################################################################################################
+				# embedding - 서로 다른 공간의 feature를 embedding 하면 similarity를 구할수 있다.
+				# 두 메모리 벡터에 대해 similarity를 구한다.(논문 그림 참조 - fig.4)
+				# 실제 이 정보는(fig.4의 그림) 현 attention 과정이 아니라 next 과정의 입력값으로 들어간다.
+				############################################################################################################
+				
 				# simi K=0
 				# get similarity, inner product
 				s_0 = tf.reduce_sum(tf.multiply(v_0,u_0),1) #[N]
