@@ -452,7 +452,10 @@ class Model():
 			xpis_neg = layer_norm(xpis_neg,scope="xpis_ln")
 		"""
 		
-
+		############################################################################################################
+		# Text Representation
+		#  - 기본적으로 Bi-LSTM 적용, 2 f/b 의 결과를 concat함.
+		############################################################################################################
 		# LSTM / GRU?
 		# config.hidden_size = 512
 		cell_text = tf.nn.rnn_cell.BasicLSTMCell(config.hidden_size,state_is_tuple=True)
@@ -519,8 +522,9 @@ class Model():
 		# J = # sentence size, Tensor("dan/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
 		# d = 512
 		##
-		# hs [N,J,d]
+		# hs [N,J,d] = (?, ?, 512)
 		# hs_neg [N,J,d]
+		
 		
 		# idim = [14, 14, 2048] 
 		##
@@ -538,6 +542,14 @@ class Model():
 
 			# memory vectors # [N,d]
 			# initialization
+			############################################################################################################
+			# memory vector - init
+			#  - visual attention 결과와 text attention 결과를 concat하는 구조
+			#  - 초기값은 평균벡터 conv feature와 text bi-lstm의 평균 
+			#  - 평균이란 의미는 nx512(batch 제외)를 512 차원으로 줄여야하는데 그럴려면 n을 1 dim으로, 즉 평균으로 하여 구하여, 
+			#    이를 하나씩, 512번하는 형태인 512(1x512)형태로 만든다. 
+			#    그래서, [b,n,512] -> [b,512] 형태로 만들기위해 tf.reduce_mean(xpis,1): 1 > axis=1이고 n->1               
+			############################################################################################################
 			with tf.variable_scope("mem_init"):
 				# text
 				# assuming the non-word location is zeros
@@ -582,7 +594,10 @@ class Model():
 
 				s_0_u_neg = tf.reduce_sum(tf.multiply(v_0,u_0_neg),1) #[N]
 				s_u_neg.append(s_0_u_neg)
-
+				
+			############################################################################################################
+			# attention 
+			############################################################################################################
 			for i in xrange(config.num_hops):
 				# text
 				# [N,d]
