@@ -160,30 +160,43 @@ class Dataset():
 	# step is total/batchSize * epoch
 	# cap means limits max number of generated batches to 1 epoch
 	def get_batches(self, batch_size, num_steps=None, shuffle=True, no_img_feat=False, full=False):
-
+		
 		num_batches_per_epoch = int(math.ceil(self.num_examples / float(batch_size)))
 		# batch_size            = 256
+		# num_steps             = int(math.ceil(train_data.num_examples/float(config.batch_size)))*config.num_epochs
 		# num_steps             = 34920 ? 
 		# shuffle               = True
 		# no_img_feat           = True
 		# full                  = False
 		# self.num_examples     = 148915
-		# num_batches_per_epoch = 512 ( ceil(581.69921875))
+		# num_batches_per_epoch = 512 ( ceil(581.69921875)) > 512 batch가 run 해야 1 epoch
 
-		if full:
+		if full: # False, 그냥 지나감
 			num_steps = num_batches_per_epoch
+			
 		# this may be zero
 		num_epochs = int(math.ceil(num_steps/float(num_batches_per_epoch)))
+		# 60 = 34920/512
+		
 		# shuflle
-		if(shuffle):
+		if(shuffle): # True
 			# shuffled idx
 			# but all epoch has the same order
-			random_idxs = random.sample(self.valid_idxs,len(self.valid_idxs))
-			random_grouped = lambda: list(grouper(random_idxs,batch_size)) # all batch idxs for one epoch
+			random_idxs    = random.sample(self.valid_idxs, len(self.valid_idxs))
+			# random_idxs  = [....84256, 144972, 91379, 146291, 114578, 110674, 32394, 53312, 62526, 139815]			
+			# 148915       = len(random_idxs)
+			
+			# 582          = len(grouper(random_idxs,batch_size))
+			# 581.699     = 148915/256(batch_size)
+			# list(grouper(random_idxs,batch_size)
+			# 	- [(256),()()()()()()()..()] 즉, 582개 ()를 가진 리스트
+			# 	- 256 의 길이를 가진 실제값(14236, 128688, 106198, 1274, 91327, 60272, 125655, 146316, 88751, 53335, 650, 36521, 23977, 59944, 71741, 89851, 48614, 56190, 64523, 60290, 7380, 104885, 121954, 14054, 112705, 144979, 106900, 36632, 8875, 15757, 19025, 65254, 145896, 63975, 58569, 140905, 126687, 55771, 52536, 31218, 58188, 57586, 68725, 58431, 126382, 47408, 121660, 30032, 10306, 127682, 94917, 97994, 132740, 5536, 130659, 43638, 65523, 56349, 141139, 78198, 119676, 72159, 36883, 11532, 72095, 73042, 119036, 130308, 86963, 84735, 237, 69396, 34277, 135128, 54534, 53927, 71433, 30574, 36952, 34172, 14429, 137702, 40703, 122998, 81428, 120354, 57579, 120606, 90196, 97925, 148389, 26664, 117240, 54361, 106, 87891, 52762, 127474, 40039, 48463, 97571, 113646, 140582, 66071, 5583, 50111, 6485, 19748, 145174, 80231, 82617, 113131, 29432, 84226, 48703, 8422, 89190, 70047, 48394, 61825, 63677, 111726, 15046, 43883, 14047, 383, 86887, 145478, 103898, 62341, 71125, 55014, 53974, 140770, 106947, 128717, 72378, 87204, 51291, 148833, 76654, 93136, 47435, 144887, 16516, 119406, 77338, 30123, 28877, 126725, 80528, 75929, 19980, 120259, 73377, 78351, 62733, 142226, 129821, 73066, 140923, 79900, 61514, 96311, 101665, 65516, 5465, 13645, 88848, 50793, 55324, 7158, 48951, 90314, 108467, 41472, 81416, 36110, 139140, 27605, 54593, 49859, 74460, 141990, 121536, 61473, 100317, 126817, 42570, 19459, 129652, 76365, 70301, 80496, 3784, 82927, 118540, 89696, 88799, 136374, 93211, 44436, 144774, 93711, 116717, 12493, 1535, 45934, 37677, 137568, 29096, 7979, 116468, 106471, 74818, 11577, 99683, 40909, 95065, 61311, 80714, 146467, 11835, 38191, 40152, 44210, 60270, 142821, 107485, 142329, 42926, 92954, 48693, 129784, 76516, 67398, 657, 128208, 133597, 49195, 98944, 49797, 2095, 22717, 81385, 122470, 481, 99976, 7560, 143826, 102451, 83642, 12189, 71371, 94192, 40358)
+			# 	- 이것들의 개수가 582개
+			random_grouped = lambda: list(grouper(random_idxs,batch_size)) # all batch idxs for one epoch			
 			# grouper
 			# given a list and n(batch_size), devide list into n sized chunks
 			# last one will fill None
-			grouped = random_grouped
+			grouped = random_grouped			
 		else:
 			raw_grouped = lambda: list(grouper(self.valid_idxs, batch_size))
 			grouped = raw_grouped
