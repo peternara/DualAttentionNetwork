@@ -239,6 +239,7 @@ def T_att(u_t, m_u, u_t_mask, wd=None, scope=None ,reuse=False, use_concat=False
 
 #v_t -> [N,L,idim]
 # m_v -> [N,d]
+# V_att와 거의 동일
 def V_att(v_t,m_v,wd=None,scope=None,reuse=False,use_concat=False,bn=False,is_train=None,keep_prob=None):
 	
 	# v_t : image vector 
@@ -290,7 +291,7 @@ def V_att(v_t,m_v,wd=None,scope=None,reuse=False,use_concat=False,bn=False,is_tr
 			
 			a_v = tf.squeeze(a_v,2)
 			# a_v = (?, ?)
-
+		# V_att와 거의 동일
 		v = softsel(v_t,a_v,hard=False) #[N,L,idim]
 		v = linear(v,ln=False,add_tanh=True,output_size=d,wd=wd,scope="P_v",bn=bn,is_train=is_train)
 		
