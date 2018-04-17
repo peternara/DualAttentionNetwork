@@ -162,35 +162,59 @@ def get_initializer(matrix):
 	return _initializer
 
 # u_t -> hs [N,J,d], m_u[N,d]
-def T_att(u_t,m_u,u_t_mask,wd=None,scope=None,reuse=False,use_concat=False,bn=False,is_train=None,keep_prob=None):
+# u_t는 text feature로써 bi-lstm의 output (batch,문장안의 word size = vocabulary sze, 512)
+# m_u는 메모리벡터 = (batch, 512)
+# 기본적으로 위의 두 입력값을 받는 각각의 fc로 구성되어 있음.
+# u_t_mask = self.sents_mask 
+#   - sents_mask = 초기에 np.zeros([N,J],dtype="bool") = (batch, 문장안의 word size = vocabulary sze)
+#   - vocabulary 사이즈가 J이면 학습셋 문장에 존재 할때, 1 아니면 0
+#   - 각 워드는 J크기안의 idx값이 존재
+#   - 예를 들어, 
+#   - 전체 voc_size = 10 이고, 데이터(학습셋) 문장이 "hey boy" 라면, hey의 고유 넘버 = 0, boy의 고유 넘버 = 8이고
+#   - u_t_mask는 [1, 0, 0, 0, 0, 0, 0, 0, 1, 0] 이런 형태
+def T_att(u_t, m_u, u_t_mask, wd=None, scope=None ,reuse=False, use_concat=False, bn=False, is_train=None, keep_prob=None):
+	# u_t : (?, ?, 512)
+	# m_u : (?, 512)
 	with tf.variable_scope(scope or "t_att"):
 		if reuse:
 			tf.get_variable_scope().reuse_variables()
-		J = tf.shape(u_t)[1]
-		d = m_u.get_shape()[-1]
-
+		J = tf.shape(u_t)[1] # 문장안의 word size = vocabulary sze, Tensor("dan/dual_attention/t_att_1/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
+		d = m_u.get_shape()[-1] # 512		
+			
 		# use concat to get attention logit
-		if use_concat:
+		if use_concat: # False, 사용안함
 			# tile m_u first
 			m_u_aug = tf.tile(tf.expand_dims(m_u,1),[1,J,1])
 			a_u = linear(tf.concat([u_t*m_u_aug,(u_t-m_u_aug)*(u_t-m_u_aug)],2),add_tanh=True,output_size=1,scope="att_logits",bn=bn,ln=False,is_train=is_train)
-
-
 		else:
 			if keep_prob is not None:
 				u_t = tf.nn.dropout(u_t,keep_prob)
-			W_u = linear(u_t,add_tanh=True,ln=False,output_size=d,wd=wd,scope="W_u",bn=bn,is_train=is_train) # [N,J,d]
+			# 기본적으로 위의 두 입력값(u_t, m_u)을 받는 각각의 fc로 구성되어 있음.
+			W_u = linear(u_t,add_tanh=True, ln=False, output_size=d,wd=wd,scope="W_u",bn=bn,is_train=is_train) # [N,J,d]
+			# W_u : <bound method Tensor.get_shape of <tf.Tensor 'dan/dual_attention/t_att_0_1/W_u/Reshape_1:0' shape=(?, ?, 512) dtype=float32>>
+			# W_u = [N,J,d] = (batch, 문장안의 word size = vocabulary sze, 512)
+			
 			if keep_prob is not None:
 				m_u = tf.nn.dropout(m_u,keep_prob)
 			W_u_m =linear(m_u,add_tanh=True,ln=False,output_size=d,wd=wd,scope="W_u_m",bn=bn,is_train=is_train)# [N,d]
+			# W_u_m : <bound method Tensor.get_shape of <tf.Tensor 'dan/dual_attention/t_att_0_1/W_u_m/Reshape_1:0' shape=(?, 512) dtype=float32>>
+			# W_u_m = [N,d] = (batch, 512)
+			
 			W_u_m = tf.tile(tf.expand_dims(W_u_m,1),[1,J,1])
+			# (batch, 512) -> (batch, 문장안의 word size = vocabulary sze, 512)
+			# <bound method Tensor.get_shape of <tf.Tensor 'dan/dual_attention/t_att_1_1/Tile:0' shape=(?, ?, 512) dtype=float32>>
+			
 			h_u = W_u * W_u_m #[N,J,d]
-			# [N,J,1]
+			# (?, ?, 512) > (batch, 문장안의 word size = vocabulary sze, 512)
+			
+			# [N,J,1] -> softmax 넣기 위한
 			a_u = linear(h_u,output_size=1,ln=False,wd=wd,scope="W_u_h",add_tanh=False,bias=False,bn=bn,is_train=is_train)
-		# [N,J]
+		# [N,J,1] -> [N,J]
 		a_u = tf.squeeze(a_u,2)
-
-		a_u = exp_mask(a_u,u_t_mask)
+			
+		# ? 
+		# u_t_mask : <bound method Tensor.get_shape of <tf.Tensor 'dan/sents_neg_mask:0' shape=(?, ?) dtype=bool>>
+		a_u = exp_mask(a_u, u_t_mask)
 
 		# [N,d]
 		u = softsel(u_t,a_u,hard=False)
