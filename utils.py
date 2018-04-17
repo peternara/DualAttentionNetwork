@@ -251,17 +251,21 @@ class Dataset():
 			# so batch_idxs might not be size batch_size -> 
 			#	- 이 의미는 grouped 안에 ()안에 반드시 256크기이지만, 그 요소안에는 False들이 존재, 256개보다 작을수 있다.
 			
-			# batch_data
+			# batch_data = training batch
 			# 	a dict of {"data":[]} > 실제데이터
-			# 	 실제로는 이런식의 데이터가 존재 : .. ('3583092048', ['two', 'female', 'performers', 'are', 'dressed', 'in', 'eccentric', 'clothing', ',', 'one', 'wearing', 'red', 'and', 'looks', 'un', 'amused', 'and', 'one', 'wearing', 'blue', 'that', 'looks', 'extremely', 'happy', '.'], [['t', 'w', 'o'], ['f', 'e', 'm', 'a', 'l', 'e'], ['p', 'e', 'r', 'f', 'o', 'r', 'm', 'e', 'r', 's'], ['a', 'r', 'e'], ['d', 'r', 'e', 's', 's', 'e', 'd'], ['i', 'n'], ['e', 'c', 'c', 'e', 'n', 't', 'r', 'i', 'c'], ['c', 'l', 'o', 't', 'h', 'i', 'n', 'g'], [','], ['o', 'n', 'e'], ['w', 'e', 'a', 'r', 'i', 'n', 'g'], ['r', 'e', 'd'], ['a', 'n', 'd'], ['l', 'o', 'o', 'k', 's'], ['u', 'n'], ['a', 'm', 'u', 's', 'e', 'd'], ['a', 'n', 'd'], ['o', 'n', 'e'], ['w', 'e', 'a', 'r', 'i', 'n', 'g'], ['b', 'l', 'u', 'e'], ['t', 'h', 'a', 't'], ['l', 'o', 'o', 'k', 's'], ['e', 'x', 't', 'r', 'e', 'm', 'e', 'l', 'y'], ['h', 'a', 'p', 'p', 'y'], ['.']])...
-			# ? for training, will also sample negative images and sentences
+			# 	실제로는 이런식의 데이터가 존재 : .. ('3583092048', ['two', 'female', 'performers', 'are', 'dressed', 'in', 'eccentric', 'clothing', ',', 'one', 'wearing', 'red', 'and', 'looks', 'un', 'amused', 'and', 'one', 'wearing', 'blue', 'that', 'looks', 'extremely', 'happy', '.'], [['t', 'w', 'o'], ['f', 'e', 'm', 'a', 'l', 'e'], ['p', 'e', 'r', 'f', 'o', 'r', 'm', 'e', 'r', 's'], ['a', 'r', 'e'], ['d', 'r', 'e', 's', 's', 'e', 'd'], ['i', 'n'], ['e', 'c', 'c', 'e', 'n', 't', 'r', 'i', 'c'], ['c', 'l', 'o', 't', 'h', 'i', 'n', 'g'], [','], ['o', 'n', 'e'], ['w', 'e', 'a', 'r', 'i', 'n', 'g'], ['r', 'e', 'd'], ['a', 'n', 'd'], ['l', 'o', 'o', 'k', 's'], ['u', 'n'], ['a', 'm', 'u', 's', 'e', 'd'], ['a', 'n', 'd'], ['o', 'n', 'e'], ['w', 'e', 'a', 'r', 'i', 'n', 'g'], ['b', 'l', 'u', 'e'], ['t', 'h', 'a', 't'], ['l', 'o', 'o', 'k', 's'], ['e', 'x', 't', 'r', 'e', 'm', 'e', 'l', 'y'], ['h', 'a', 'p', 'p', 'y'], ['.']])...
+			#       batch_data['pos'] = 256개
+			#	batch_data['neg'] = 256개
+			# for training, will also sample negative images and sentences
 			# 	-> get_by_idxs pos nad neg sampling
+			#       -> pos = neg = 256개
 			batch_data = self.get_by_idxs(batch_idxs) # get the actual data based on idx
-
-			if not no_img_feat:
-				
+			
+			# 실제로 현재 진행무
+			if not no_img_feat: # True, 그래서 패스				
 				imgid2idx = {} # get all the imiage to index
-				if self.is_train:
+				
+				if self.is_train: # 
 					flip = batch_data['flip']
 					for pos,neg in batch_data['data']:
 						imgid_pos = pos[0]
