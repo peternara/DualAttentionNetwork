@@ -602,7 +602,7 @@ class Model():
 				
 				# simi K=0
 				# get similarity, inner product
-				s_0 = tf.reduce_sum(tf.multiply(v_0,u_0),1) #[N]
+				s_0 = tf.reduce_sum(tf.multiply(v_0,u_0),1) #[N] - N batch size
 				s.append(s_0)
 				# for training
 				s_0_v_neg = tf.reduce_sum(tf.multiply(v_0_neg,u_0),1) #[N]
