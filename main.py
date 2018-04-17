@@ -495,10 +495,16 @@ def train(config):
 		last_time = time.time()
 		# total / batchSize  * epoch
 		num_steps = int(math.ceil(train_data.num_examples/float(config.batch_size)))*config.num_epochs
+		# train_data.num_examples = 148915
+		# config.batch_size       = 256
+		# config.num_epochs       = 60
+		
 		# get_batches is a generator, run on the fly
 		# there will be num_steps batch
 		str_ = " batch_size:%s, epoch:%s, %s step every epoch, total step:%s,eval/save every %s steps"%(config.batch_size,config.num_epochs,math.ceil(train_data.num_examples/float(config.batch_size)),num_steps,config.save_period)
 		print str_
+		#  str_ = batch_size:256, epoch:60, 582.0 step every epoch, total step:34920,eval/save every 1000 steps
+		
 		self_summary_strs.append(str_)
 
 		metric = "t2i_r@5" # TODO: change this?
