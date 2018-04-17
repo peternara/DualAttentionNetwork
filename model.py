@@ -436,7 +436,7 @@ class Model():
 					
 				# self.idim = [14, 14, 2048]
 				# 그래서 [-1]은 마지막 여기선 [2] = 2048
-				xpis     = tf.reshape(xpis,[NP,-1,self.idim[-1]])
+				xpis     = tf.reshape(xpis,[NP,-1,self.idim[-1]]) # (?, ?, 2048)
 				xpis_neg = tf.reshape(xpis_neg,[NP,-1,self.idim[-1]])
 					
 			
@@ -526,12 +526,12 @@ class Model():
 		##
 		# 마지막 결과인 hs vs xpis는            
 		# 여기서 중요한것은 이미지와 텍스트의 최종 dimension(512)을 맞춰주는것이다.
-		#   - memrory vector 구하기위해 [batch, 512]로 평균을 구하면서 맞춰준다.     
+		#   - memrory vector 구하기 위해 [batch, 512]로 평균을 구하면서 맞춰준다.     
 		
 		# idim = [14, 14, 2048] 
 		##
-		# xpis [N,L,idim]
-		# xpis_neg [N,L,idim] 
+		# xpis [N,L,idim] # (?, ?, 2048)
+		# xpis_neg [N,L,idim] # (?, ?, 2048)
 		with tf.variable_scope("dual_attention"):
 			# for training
 			s       = []
@@ -550,19 +550,23 @@ class Model():
 			#  - 초기값은 평균벡터 conv feature와 text bi-lstm의 평균 
 			#  - 평균이란 의미는 nx512(batch 제외)를 512 차원으로 줄여야하는데 그럴려면 n을 1 dim으로, 즉 평균으로 하여 구하여, 
 			#    이를 하나씩, 512번하는 형태인 512(1x512)형태로 만든다. 
-			#    그래서, [b,n,512] -> [b,512] 형태로 만들기위해 tf.reduce_mean(xpis,1): 1 > axis=1이고 n->1               
+			#    그래서, (b,n,512)-> (b,512) 형태로 만들기위해,
+			#              텍스트 정보는 tf.reduce_mean(hs,1): 1 > axis=1이고 n->1               
+			#              이미지 정보는 fc(linear)로 (batch, ?, 2048) > (b,512)           
 			############################################################################################################
 			with tf.variable_scope("mem_init"):
 				# text
 				# assuming the non-word location is zeros
 				# [N,d] / [N]
+				
 				#u_0 = tf.truediv(tf.reduce_sum(hs,1), tf.expand_dims(tf.cast(sents_len,tf.float32),1))
 				#u_0_neg = tf.truediv(tf.reduce_sum(hs_neg,1),tf.expand_dims(tf.cast(sents_neg_len,tf.float32),1))
-				u_0     = tf.reduce_mean(hs,1)
-				u_0_neg = tf.reduce_mean(hs_neg,1)
+				
+				u_0     = tf.reduce_mean(hs, 1) # [batch, ?, 512] -> [batch, 512]
+				u_0_neg = tf.reduce_mean(hs_neg, 1)
 
-				u_0     = tf.nn.dropout(u_0,keep_prob)
-				u_0_neg = tf.nn.dropout(u_0_neg,keep_prob)
+				u_0     = tf.nn.dropout(u_0, keep_prob)
+				u_0_neg = tf.nn.dropout(u_0_neg, keep_prob)
 
 				#u_0 = ls
 				#u_0_neg = ls_neg
@@ -573,11 +577,14 @@ class Model():
 				# img
 				# [N,L,idim] -> [N,d]
 				with tf.variable_scope("img_0"):
+					# linear : fully-connected layer
+					# xpis : (?, ?, 2048)
 					v_0    = linear(tf.reduce_mean(xpis,1),output_size=d,add_tanh=True,ln=False,bias=True,bn=False,scope="img_p0")
+					# v_0 : (?, 512)
 					tf.get_variable_scope().reuse_variables()
 					v_0_neg = linear(tf.reduce_mean(xpis_neg,1),output_size=d,ln=False,add_tanh=True,bias=True,bn=False,scope="img_p0")
 
-					v_0     = tf.nn.dropout(v_0,keep_prob)
+					v_0     = tf.nn.dropout(v_0,keep_prob) # v_0 : (?, 512)					
 					v_0_neg = tf.nn.dropout(v_0_neg,keep_prob)
 
 				m_v     = v_0
