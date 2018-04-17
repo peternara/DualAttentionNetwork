@@ -212,12 +212,15 @@ def T_att(u_t, m_u, u_t_mask, wd=None, scope=None ,reuse=False, use_concat=False
 		# [N,J,1] -> [N,J]
 		a_u = tf.squeeze(a_u,2)
 			
-		# ? 
+		# ? 단어가 존재하는 index와 일치하는 곳의 value만 남겨두겠다는 심산인듯~
+		#    u_t_mask = [1,   0,   0, 0,  0, 0,  0, 0, 1, 0]
+		#    a_u      = [1.2, 3, 4.3, 6,  8, 9, 19, 1, 2, 0]
+		#        so,    [1.2, 0, 0, 0,  0, 0, 0, 0, 2, 0] = exp_mask( a_u, u_t_mask)
 		# u_t_mask : <bound method Tensor.get_shape of <tf.Tensor 'dan/sents_neg_mask:0' shape=(?, ?) dtype=bool>>
 		a_u = exp_mask(a_u, u_t_mask)
 
 		# [N,d]
-		u = softsel(u_t,a_u,hard=False)
+		u = softsel(u_t, a_u, hard=False)
 	return u
 
 #v_t -> [N,L,idim]
