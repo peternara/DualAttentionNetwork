@@ -208,13 +208,23 @@ def get_args():
 
 
 def read_data(config,datatype,loadExistModelShared=False,subset=False): 
-	data_path = os.path.join(config.prepropath,"%s_data.p"%datatype) # prepro/train_data.p, prepro/val_data.p
+	data_path   = os.path.join(config.prepropath,"%s_data.p"%datatype) # prepro/train_data.p, prepro/val_data.p
 	shared_path = os.path.join(config.prepropath,"%s_shared.p"%datatype) # prepro/train_shared.p, prepro/val_shared.p
 	
 	with open(data_path,"rb")as f: # prepro/train_data.p, prepro/val_data.p
 		data = pickle.load(f)
+	# data = (imageid, sentence_word[], sentence_word_char[[]])
+	# 1 set 예 -  
+	#	('442983801', 
+	#	['a', 'very', 'young', 'girl', 'is', 'holding', 'food', 'while', 'sitting', 'in', 'a', 'highchair', '.'],
+	#	[['a'], ['v', 'e', 'r', 'y'], ['y', 'o', 'u', 'n', 'g'], ['g', 'i', 'r', 'l'], ['i', 's'], ['h', 'o', 'l', 'd', 'i', 'n', 'g'], ['f', 'o', 'o', 'd'], ['w', 'h', 'i', 'l', 'e'], ['s', 'i', 't', 't', 'i', 'n', 'g'], ['i', 'n'], ['a'], ['h', 'i', 'g', 'h', 'c', 'h', 'a', 'i', 'r'], ['.']]),
+		
 	with open(shared_path,"rb") as f: # prepro/train_shared.p, prepro/val_shared.p
 		shared = pickle.load(f) # this will be added later with word id, either new or load from exists
+	# shared - (word:1)	
+	# 예 - 
+	#	... 'groomer': 1, 'ywca': 1, 'footwork': 1, 'shane': 1, 'tinged': 1, 'jumpos': 1, 'wight': 1, 'gondolas': 1, '5028': 1, 'wavelength': 1, '66197': 1, 'bazzar': 1, 'apportioned': 1, 'parasailors': 1, 'rotting': 1, 'jewel': 1, 'emery': 1, 'intentionally': 1, 'pods': 1})}
+	# 현상태는 존재하는 word:1로 셋팅한 파일정보인듯
 
 	# load the imgid2feat from separate npz file
 	shared['imgid2feat'] = None
@@ -230,7 +240,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 		if type(config.feat_dim) == type("a"): # 여길 통과하지 않음. 다만 string 값으로 주어지는듯
 			config.feat_dim = [int(one) for one in config.feat_dim.split(",")] 
 		
-		shared['featpath'] = config.featpath # config.featpath = resnet-152
+		shared['featpath'] = config.featpath # config.featpath = resnet-152(directory)
 		#shared['featCache'] = {}
 		#shared['cacheSize'] = 0 # one for train and one for val
        
@@ -238,7 +248,22 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 	# example) 1 unit > ('240696675', ['dog', 'running', 'on', 'narrow', 'dirt', 'path', '.'], [['d', 'o', 'g'], ['r', 'u', 'n', 'n', 'i', 'n', 'g'], ['o', 'n'], ['n', 'a', 'r', 'r', 'o', 'w'], ['d', 'i', 'r', 't'], ['p', 'a', 't', 'h'], ['.']]), 
 	num_examples = len(data['data']) # (imageId,sent,sentc) 
 	# num_examples = 148915(=학습 전체 이미지 29783개 x Caption 5, trainingset), 5000(valset)
- 
+	# 	이 파일정보에서 얻을수 있음 : ../../../DeViSE/DB/flickr30k_parse/flickr30k_results_20130124.token
+	#		예) flickr30k_results_20130124.token
+	#		1000092795.jpg#0        Two young guys with shaggy hair look at their hands while hanging out in the yard .
+	#		1000092795.jpg#1        Two young , White males are outside near many bushes .
+	#		1000092795.jpg#2        Two men in green shirts are standing in a yard .
+	#		1000092795.jpg#3        A man in a blue shirt standing in a garden .
+	#		1000092795.jpg#4        Two friends enjoy time spent together .
+ 	# 궁금한점은 이미지 id는 동일한데..5개씩가지고 있으면, 중복될텐데..문제가 발생할수 있는데 어떻게 구성될까?
+	# > 일단 기본 format으로 재구성하는 prepro_flickr30k.py을 봐야함.
+	# prepro_flickr30k.py 은
+	#	1. image id와 sentence를 가져와서, 다음과 같이 imageid, worde단위, char단위로 구분한다.	
+	# 		4741726894
+	#		['a', 'woman', 'wearing', 'a', 'green', 'shirt', 'is', 'sitting', 'on', 'a', 'bench', 'in', 'front', 'of', 'two', 'elephant', 'statues', '.']
+	#		[['a'], ['w', 'o', 'm', 'a', 'n'], ['w', 'e', 'a', 'r', 'i', 'n', 'g'], ['a'], ['g', 'r', 'e', 'e', 'n'], ['s', 'h', 'i', 'r', 't'], ['i', 's'], ['s', 'i', 't', 't', 'i', 'n', 'g'], ['o', 'n'], ['a'], ['b', 'e', 'n', 'c', 'h'], ['i', 'n'], ['f', 'r', 'o', 'n', 't'], ['o', 'f'], ['t', 'w', 'o'], ['e', 'l', 'e', 'p', 'h', 'a', 'n', 't'], ['s', 't', 'a', 't', 'u', 'e', 's'], ['.']]
+
+	
 	"""
 	if(filter_data): # TODO: no filter implemented
 		masks = []
@@ -260,13 +285,22 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
         #       best  save  shared.p
 	# this is the file for the model' training, with word ID and stuff, if set load in config, will read from existing, otherwise write a new one
 	model_shared_path = os.path.join(config.outpath,"shared.p") # note here the shared.p is for one specific model
-        # model_shared_path = models/dan/00/shared.p
-		
-	if(loadExistModelShared): # tain is loadExistModelShared=False
+        # model_shared_path = models/dan/00/shared.p			
+	if(loadExistModelShared): # tain is loadExistModelShared=False, not train > val set 
+		# models/dan/00/shared.p	
 		with open(model_shared_path,"rb") as f:
 			model_shared = pickle.load(f)
+		# word2idx, char2idx 정보가 있다.
+		# 실제 예
+		# ... 'sloping': 11790, 'album': 11792, 'junk': 11793, 'kinds': 5914, 'shredded': 5915, 'mulch': 11794, 'pumps': 5916, 'upwards': 11795, 'barista': 10647, 'ranks': 5918, 'gelati': 11796, 'dominoes': 5919, 'sleeves': 6909, 'laundromat': 5920, 
+		# 'sash': 5921}, 'char2idx': {'<UNK>': 1, '!': 2, '#': 3, '%': 4, '$': 5, '&': 6, ',': 7, '.': 8, '1': 9, '0': 10, '3': 11, '2': 12, '5': 13, '4': 14, '7': 15, '6': 16, '9': 17, '8': 18, ';': 19, '?': 20, '<NULL>': 0, 'a': 22, 'c': 23, 'b': 21, 'e': 24, 'd': 25, 'g': 26, 'f': 27, 'i': 28, 'h': 29, 'k': 30, 'j': 31, 'm': 32, 'l': 33, 'o': 34, 'n': 35, 'q': 36, 'p': 37, 's': 38, 'r': 39, 'u': 40, 't': 41, 'w': 42, 'v': 43, 'y': 44, 'x': 45, 'z': 46}}
+			
 		for key in model_shared:
 			shared[key] = model_shared[key]
+			# key = word2idx
+			# model_shared[key] = {'raining': 2, 'writings': 5922, 'childern': 5923, 'foul': 3, 'revelers': 19,....
+			# key = char2idx
+			# model_shared[key] = {'<UNK>': 1, '!': 2, '#': 3, '%': 4, '$': 5, '&': 6, ',': 7, '.': 8, '1': 9, '0': 10, '3': 11, '2': 12, '5': 13, '4': 14, '7': 15, '6': 16, '9': 17, '8': 18, ';': 19, '?': 20, '<NULL>': 0, 'a': 22, 'c': 23, 'b': 21, 'e': 24, 'd': 25, 'g': 26, 'f': 27, 'i': 28, 'h': 29, 'k': 30, 'j': 31, 'm': 32, 'l': 33, 'o': 34, 'n': 35, 'q': 36, 'p': 37, 's': 38, 'r': 39, 'u': 40, 't': 41, 'w': 42, 'v': 43, 'y': 44, 'x': 45, 'z': 46}
 		# no fine tuning of word vector
 		if config.no_wordvec:
 			shared['word2vec'] = {}
@@ -404,13 +438,24 @@ def load_feats(imgid2idx,shared,config):
 
 def train(config):
 	self_summary_strs = [] # summary string to print out for later
-	val_perf = [] # summary of validation performance
+	val_perf          = [] # summary of validation performance
 
+	############################################################################################
+	# flickr30k data
+	# 	image : 31783 인데 29783개의  학습셋
+	#	trainset : mRNN/flickr30K_train_list_mRNN.txt :  29783개
+	#       valset : mRNN/flickr30K_val_list_mRNN.txt  : 1000
+	#	testset : mRNN/flickr30K_test_list_mRNN.txt : 1000
+	############################################################################################
+	
 	# first, read both data and filter stuff,  to get the word2vec idx,
-	train_data = read_data(config,'train',config.load)
+	train_data         = read_data(config, 'train', config.load) # config.load = False
 	config.imgfeat_dim = train_data.imgfeat_dim
-	val_data = read_data(config,'val',True,subset=False) # dev should always load model shared data(word2idx etc.) from train
-
+	# print train_data.imgfeat_dim = train
+	
+	val_data           = read_data(config, 'val', True, subset=False) # dev should always load model shared data(word2idx etc.) from train
+		
+	
 	# now that the dataset is loaded , we get the max_word_size from the dataset
 	# then adjust the max based on the threshold as well
 	# also get the vocab size
