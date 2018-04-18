@@ -258,11 +258,37 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
  	# 궁금한점은 이미지 id는 동일한데..5개씩가지고 있으면, 중복될텐데..문제가 발생할수 있는데 어떻게 구성될까?
 	# > 일단 기본 format으로 재구성하는 prepro_flickr30k.py을 봐야함.
 	# prepro_flickr30k.py 은
-	#	1. image id와 sentence를 가져와서, 다음과 같이 imageid, worde단위, char단위로 구분한다.	
+	#	1. imagepath, sentence, imageid, sentnceid로 구분
+	#		- 예) 1000092795.jpg#0        Two young guys with shaggy hair look at their hands while hanging out in the yard .
+	#			imageId - 1000092795
+	#			sentid  - 1000092795.jpg#0 
+	#			text    - Two young guys with shaggy hair look at their hands while hanging out in the yard .
+	#			그리고 이런형태로 먼저 저장 > imgid2text[imageId].append((sentid,text.strip()))
+	#	2. image id와 sentence를 가져와서, 다음과 같이 imageid, worde단위, char단위로 구분한다.	
 	# 		4741726894
 	#		['a', 'woman', 'wearing', 'a', 'green', 'shirt', 'is', 'sitting', 'on', 'a', 'bench', 'in', 'front', 'of', 'two', 'elephant', 'statues', '.']
 	#		[['a'], ['w', 'o', 'm', 'a', 'n'], ['w', 'e', 'a', 'r', 'i', 'n', 'g'], ['a'], ['g', 'r', 'e', 'e', 'n'], ['s', 'h', 'i', 'r', 't'], ['i', 's'], ['s', 'i', 't', 't', 'i', 'n', 'g'], ['o', 'n'], ['a'], ['b', 'e', 'n', 'c', 'h'], ['i', 'n'], ['f', 'r', 'o', 'n', 't'], ['o', 'f'], ['t', 'w', 'o'], ['e', 'l', 'e', 'p', 'h', 'a', 'n', 't'], ['s', 't', 'a', 't', 'u', 'e', 's'], ['.']]
+	#		그리고 이런형태로 저장 >  
+	#			data.append((imgid, si, csi)) # (imageid, worde단위, char단위)
+	#			sentid2data[sentid] = {"sents":si,"sents_c":csi}
+	#	3.save - d와 share의 두가지 형태로 두파일로 저장
+	#		d = {
+	#                'data':data, # (imgid,si,csi)
+	#                "sentids":sentids, # (sentid)
+	#                "imgids":imgids,
+ 	#               #"sentid2data":sentid2data
+ 	#               }	
+	#		> train_data.p - 요런 형태로 저장 - {'imgids': ['196521598', '19663315',..],   'data': [('196521598', ['a',,,], [].., 'sentids': ['196521598.jpg#0', ... '295729735.jpg#4']}         
+	#
+	#		shared = {
+ 	#                       #"imgid2feat":imgid2feat, # save the image feature to a separete npz file
+   	#                       "word_counter":word_counter,
+ 	#                       "char_counter":char_counter,
+  	#                      "word2vec":{}, # or "word2vec":word2vec,
+ 	#               }
+	#               > train_shared.p - 요런 형태로 저장 - {'char_counter': Counter({'a': 28373, 'e': 23357, 'n': 22336, 'i': 20714, 'o': 18937,,,}, 'word2vec': {}, 'word_counter': Counter({'a': 8768, '.': 4766, 'in': 2633,,,,'pods': 1})}
 
+		
 	
 	"""
 	if(filter_data): # TODO: no filter implemented
