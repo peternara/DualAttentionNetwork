@@ -213,6 +213,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 	
 	with open(data_path,"rb")as f: # prepro/train_data.p, prepro/val_data.p
 		data = pickle.load(f)
+	# 아래 부분에 좀더 자세한 내용이 있음.	
 	# data = (imageid, sentence_word[], sentence_word_char[[]])
 	# 1 set 예 -  
 	#	('442983801', 
@@ -221,6 +222,7 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 		
 	with open(shared_path,"rb") as f: # prepro/train_shared.p, prepro/val_shared.p
 		shared = pickle.load(f) # this will be added later with word id, either new or load from exists
+	# 아래 부분에 좀더 자세한 내용이 있음.	
 	# shared - (word:1)	
 	# 예 - 
 	#	... 'groomer': 1, 'ywca': 1, 'footwork': 1, 'shane': 1, 'tinged': 1, 'jumpos': 1, 'wight': 1, 'gondolas': 1, '5028': 1, 'wavelength': 1, '66197': 1, 'bazzar': 1, 'apportioned': 1, 'parasailors': 1, 'rotting': 1, 'jewel': 1, 'emery': 1, 'intentionally': 1, 'pods': 1})}
@@ -287,7 +289,6 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
   	#                      "word2vec":{}, # or "word2vec":word2vec,
  	#               }
 	#               > train_shared.p - 요런 형태로 저장 - {'char_counter': Counter({'a': 28373, 'e': 23357, 'n': 22336, 'i': 20714, 'o': 18937,,,}, 'word2vec': {}, 'word_counter': Counter({'a': 8768, '.': 4766, 'in': 2633,,,,'pods': 1})}
-
 		
 	
 	"""
