@@ -588,6 +588,7 @@ def train(config):
 		last_time = time.time()
 		# total / batchSize  * epoch
 		num_steps = int(math.ceil(train_data.num_examples/float(config.batch_size)))*config.num_epochs
+		# num_steps = 34920
 		# train_data.num_examples = 148915
 		# config.batch_size       = 256
 		# config.num_epochs       = 60
