@@ -347,7 +347,24 @@ def read_data(config,datatype,loadExistModelShared=False,subset=False):
 			# word2idx -> the idx is the wordCounter's item() idx 
 			# the new word to index
 			# 
+			# 일률적으로 단어의 id를 매긴다
 			shared['word2idx'] = {word:idx+2 for idx,word in enumerate([word for word,count in shared['word_counter'].items() if (count > config.word_count_thres) and not shared['word2vec'].has_key(word)])}
+			'''
+			# 위와 같다
+			word_list = []
+               		for word, count in shared['word_counter'].items():
+                        	#print word, count # ex- hilfiger 2
+                        	if (count > config.word_count_thres):
+                                	word_list.append(word)
+
+                	shared['word2idx'] = {}
+                	for idx,word in enumerate(word_list):
+                        	#print idx, word
+                        	shared['word2idx'].update({word:idx+2})
+                	print shared['word2idx']
+                	print len(shared['word2idx'])
+			'''
+			# 2번부터 시작하는듯~ 
                         # shared['word2idx'] : word to index
 			# example) {.....,'smilling': 11667, 'walk': 5774, 'packaging': 11668,....}
 
@@ -405,7 +422,8 @@ sS'$'
 I5
 
 '''
-		# existing word in word2vec will be put after len(new word)+2
+		# existing word in word2vec will be put after len(new word)+2(0:<NULL>, 1:<UNK>)
+		# model_shared_path = models/dan/00/shared.p
 		pickle.dump({"word2idx":shared['word2idx'],'char2idx':shared['char2idx']},open(model_shared_path,"wb"))
 
 
@@ -418,10 +436,12 @@ I5
 
 	# this could be empty if finetune
 	shared['existing_word2idx'] = {word:idx for idx,word in enumerate([word for word in sorted(shared['word2vec'].keys()) if not shared['word2idx'].has_key(word)])}
+	# shared['existing_word2idx'] = {} # train, val
 	
 	# idx -> vector
 	# this could be empty if finetune
 	idx2vec = {idx:shared['word2vec'][word] for word,idx in shared['existing_word2idx'].items()}
+	# idx2vec = {} # train, val
 	# load all this vector into a matrix
 	# so you can use word -> idx -> vector
 	# using xrange(len) so that the idx is 0,1,2,3...
@@ -429,6 +449,7 @@ I5
 
 	# could be empty
 	shared['existing_emb_mat'] = np.array([idx2vec[idx] for idx in xrange(len(idx2vec))],dtype="float32")
+	# shared['existing_emb_mat'] = [] # train, val
 	print "shared['existing_emb_mat'].shape:%s"%(list(shared['existing_emb_mat'].shape))
 
 	# get the image feature into one matrix as well
