@@ -645,20 +645,26 @@ def train(config):
 			# pair each pos image with max_similarity(pos_img,neg_sent)
 			# and pos sent with max_similarity(pos_sent,neg_img)
 			assert len(batch_data['pos']) == len(batch_data['neg'])
+			
 			# TODO: select hn_num of negative here, save computation?
 			alldata = batch_data['pos'] + batch_data['neg'] #  (imgid,sent,sent_c)
+			# 512, alldata 안에 확인결과 중복이 존재할수도 있다.
+			# 즉, 밑에 imgid2idx[imgid] 변수의 크기가 512보다 작을수있다.
+			
 			#  1. get all pos and neg's image and sentence embeddding			
 			all_imgs = list(set([one[0] for one in alldata]))
 			imgid2idx = {}
 			for imgid in all_imgs:
 				imgid2idx[imgid] = len(imgid2idx.keys())
+				
 			# load the actual image feature matrix
-			image_feats = load_feats(imgid2idx,train_data.shared,config)
-			mining_batch = {}
-			mining_batch['imgs'] = [one[0] for one in alldata]
-			mining_batch['imgid2idx'] = imgid2idx
+			image_feats                 = load_feats(imgid2idx,train_data.shared,config)
+			mining_batch                = {}
+			mining_batch['imgs']        = [one[0] for one in alldata]
+			mining_batch['imgid2idx']   = imgid2idx
 			mining_batch['imgidx2feat'] = image_feats
-			mining_batch['data'] = [(one[1],one[2]) for one in alldata] # a list of (sent,sent_c)
+			mining_batch['data']        = [(one[1],one[2]) for one in alldata] # a list of (sent,sent_c)
+			
 			# mining_batch, N_pos+N_neg
 			z_u,z_v = tester.step(sess,(batchIdx,Dataset(mining_batch,"test",shared=train_data.shared,is_train=False,imgfeat_dim=config.feat_dim)))
 			assert len(z_u) == len(z_v),(len(z_u),len(z_v))
