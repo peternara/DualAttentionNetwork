@@ -480,7 +480,7 @@ def load_feats(imgid2idx,shared,config):
 			"""
 			# local conv featue file path = os.path.join(shared['featpath'],"%s.npy"%imgid)
 			# 	ex) resnet-152/523488750.npy
-			feat = np.load(os.path.join(shared['featpath'],"%s.npy"%imgid))
+			feat = np.load(os.path.join(shared['featpath'],"%s.npy"%imgid)) # (14, 14, 2048)
 		else:
 			feat = shared['imgid2feat'][imgid]
 		image_feats[imgid2idx[imgid]] = feat
@@ -503,8 +503,7 @@ def train(config):
 	config.imgfeat_dim = train_data.imgfeat_dim
 	# print train_data.imgfeat_dim = train
 	
-	val_data           = read_data(config, 'val', True, subset=False) # dev should always load model shared data(word2idx etc.) from train
-		
+	val_data           = read_data(config, 'val', True, subset=False) # dev should always load model shared data(word2idx etc.) from train		
 	
 	# now that the dataset is loaded , we get the max_word_size from the dataset
 	# then adjust the max based on the threshold as well
@@ -679,16 +678,17 @@ def train(config):
 				#	3681637675 507
 				
 			# load the actual image feature matrix
+			# 	conv image feature file load
 			image_feats = load_feats(imgid2idx,train_data.shared,config)
 			
 			mining_batch                = {}
-			mining_batch['imgs']        = [one[0] for one in alldata]
+			mining_batch['imgs']        = [one[0] for one in alldata] # image ids
 			mining_batch['imgid2idx']   = imgid2idx
 			mining_batch['imgidx2feat'] = image_feats
-			mining_batch['data']        = [(one[1],one[2]) for one in alldata] # a list of (sent,sent_c)
+			mining_batch['data']        = [(one[1],one[2]) for one in alldata] # a list of (sentence_word, sentence_word_char)
 			
 			# mining_batch, N_pos+N_neg
-			z_u,z_v = tester.step(sess,(batchIdx,Dataset(mining_batch,"test",shared=train_data.shared,is_train=False,imgfeat_dim=config.feat_dim)))
+			z_u, z_v = tester.step(sess,(batchIdx,Dataset(mining_batch,"test",shared=train_data.shared,is_train=False,imgfeat_dim=config.feat_dim)))
 			assert len(z_u) == len(z_v),(len(z_u),len(z_v))
 			z_u_pos = z_u[:len(batch_data['pos'])]
 			z_v_pos = z_v[:len(batch_data['pos'])]
