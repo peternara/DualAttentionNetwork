@@ -649,6 +649,8 @@ def train(config):
 			# TODO: select hn_num of negative here, save computation?
 			alldata = batch_data['pos'] + batch_data['neg'] #  (imgid,sent,sent_c)
 			# 512, alldata 안에 확인결과 중복이 존재할수도 있다.
+			#	이 중복은 positive data에서 발생, 이를 제외한 negative data를 만들었으니 당연~
+			#	그래서, 좀 바꿔야하지 않을까함
 			# 즉, 밑에 imgid2idx[imgid] 변수의 크기가 512보다 작을수있다.
 			
 			#  1. get all pos and neg's image and sentence embeddding			
