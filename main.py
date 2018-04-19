@@ -637,7 +637,8 @@ def train(config):
 
 				finalperf = evalperf
 				val_perf.append(evalperf)
-
+				
+			# 여기는 모든 데이터 정보로부터 batch단위로 재구성한다.
 			batchIdx,batch_data = batch
 			batch_data = batch_data.data
 			# each batch is ['pos'],['neg']
@@ -645,28 +646,43 @@ def train(config):
 			# pair each pos image with max_similarity(pos_img,neg_sent)
 			# and pos sent with max_similarity(pos_sent,neg_img)
 			assert len(batch_data['pos']) == len(batch_data['neg'])
-			
 			# TODO: select hn_num of negative here, save computation?
-			alldata = batch_data['pos'] + batch_data['neg'] #  (imgid,sent,sent_c)
+			alldata = batch_data['pos'] + batch_data['neg'] #  (imgid,sent,sent_c)					
+			#  1. get all pos and neg's image and sentence embeddding			
+			#for one in alldata:
+                        #       print one[0] # image id
+                        #       print one[1] # sentence_word
+                        #       print one[2] # sentence_word_char
+			#
+			#  ??? all_imgs의 길이는 512(156+256)이어야하는데, 이보다 조금 못미칠경우가 있다.
+			#  	print len(alldata) = 512, 인데,  	
+			#  	print len(all_imgs) = 508 ??
 			# 512, alldata 안에 확인결과 중복이 존재할수도 있다.
 			#	이 중복은 positive data에서 발생, 이를 제외한 negative data를 만들었으니 당연~
-			#	그래서, 좀 바꿔야하지 않을까함
-			# 즉, 밑에 imgid2idx[imgid] 변수의 크기가 512보다 작을수있다.
+			#	그래서, 좀 바꿔야하지 않을까함	
 			
-			#  1. get all pos and neg's image and sentence embeddding			
-			all_imgs = list(set([one[0] for one in alldata]))
-			imgid2idx = {}
-			for imgid in all_imgs:
+			all_imgs  = list(set([one[0] for one in alldata])) # so, batch image ids
+			imgid2idx = {}		
+			
+			for imgid in all_imgs: # batch image ids = 508이라면
 				imgid2idx[imgid] = len(imgid2idx.keys())
+				# print imgid, imgid2idx[imgid]
+				# 	2881441125 0
+				#       ...
+				# 	51146082 472
+				# 	2198484810 473
+				#	769934076 474
+				# 	2874876837 475
+				#       ...
+				#	3681637675 507
 				
 			# load the actual image feature matrix
-			image_feats                 = load_feats(imgid2idx,train_data.shared,config)
-			mining_batch                = {}
-			mining_batch['imgs']        = [one[0] for one in alldata]
-			mining_batch['imgid2idx']   = imgid2idx
+			image_feats = load_feats(imgid2idx,train_data.shared,config)
+			mining_batch = {}
+			mining_batch['imgs'] = [one[0] for one in alldata]
+			mining_batch['imgid2idx'] = imgid2idx
 			mining_batch['imgidx2feat'] = image_feats
-			mining_batch['data']        = [(one[1],one[2]) for one in alldata] # a list of (sent,sent_c)
-			
+			mining_batch['data'] = [(one[1],one[2]) for one in alldata] # a list of (sent,sent_c)
 			# mining_batch, N_pos+N_neg
 			z_u,z_v = tester.step(sess,(batchIdx,Dataset(mining_batch,"test",shared=train_data.shared,is_train=False,imgfeat_dim=config.feat_dim)))
 			assert len(z_u) == len(z_v),(len(z_u),len(z_v))
