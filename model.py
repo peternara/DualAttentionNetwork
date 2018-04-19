@@ -465,7 +465,10 @@ class Model():
 				# word_emb_mat   = <tf.Variable 'emb/word/var/word_emb_mat:0' shape=(11798, 512) dtype=float32_ref>
 				# self.sents     = Tensor("dan/sents:0", shape=(?, ?), dtype=int32, device=/device:GPU:0)
 				# self.sents_neg = Tensor("dan/sents_neg:0", shape=(?, ?), dtype=int32, device=/device:GPU:0)
-				Asents = tf.nn.embedding_lookup(word_emb_mat,self.sents)				 
+				Asents = tf.nn.embedding_lookup(word_emb_mat,self.sents)	
+				# 여기서 이해안가는게 있는데 sents=입력값(?, ?) 이건데 갑자기 Asents=아웃풋(?, ?, 512)이 이걸로 변환된 이유는 ??
+				#	word_emb_mat과 관련되어 보이는데 위에서 보듯이 dim이 다르다.
+				
 				Asents_neg = tf.nn.embedding_lookup(word_emb_mat,self.sents_neg)
 				
 				"""
@@ -495,6 +498,7 @@ class Model():
 				# self.image_emb_mat : Tensor("dan/image_emb_mat:0", shape=(?, 14, 14, 2048), dtype=float32, device=/device:GPU:0)
 				# self.pis : Tensor("dan/pis:0", shape=(?,), dtype=int32, device=/device:GPU:0)
 				xpis = tf.nn.embedding_lookup(self.image_emb_mat,self.pis)
+				
 				#tf.get_variable_scope().reuse_variables()
 				
 				# self.pis_neg: Tensor("dan/pis_neg:0", shape=(?,), dtype=int32, device=/device:GPU:0)
@@ -526,10 +530,11 @@ class Model():
 		# config.hidden_size = 512
 		cell_text = tf.nn.rnn_cell.BasicLSTMCell(config.hidden_size,state_is_tuple=True)
 		#cell_text = tf.nn.rnn_cell.GRUCell(d)
+		
 		# add dropout
 		# self.is_train : Tensor("dan/is_train:0", shape=(), dtype=bool, device=/device:GPU:0)
 		# config.keep_prob = 0.5
-		keep_prob = tf.cond(self.is_train,lambda:tf.constant(config.keep_prob),lambda:tf.constant(1.0))
+		keep_prob = tf.cond(self.is_train, lambda:tf.constant(config.keep_prob), lambda:tf.constant(1.0))
 		# keep_prob : Tensor("dan/cond/Merge:0", shape=(), dtype=float32, device=/device:GPU:0)
 	
 		cell_text = tf.nn.rnn_cell.DropoutWrapper(cell_text,keep_prob)
@@ -544,6 +549,10 @@ class Model():
 
 		with tf.variable_scope("reader"):
 			with tf.variable_scope("text"):
+				
+				# xsents: (?, ?, 512) 
+				#	> ?? (?, ?) 이 아닌가??
+				# (cell_text, cell_text..) - f/b cell
 				(fw_hs, bw_hs),(fw_ls, bw_ls) = tf.nn.bidirectional_dynamic_rnn(cell_text, cell_text, xsents, sequence_length=sents_len, dtype="float", scope="utext")
 				# fw_hs = Tensor("dan/reader/text/utext/fw/fw/transpose:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)
 				# bw_hs = Tensor("dan/reader/text/ReverseSequence:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)
@@ -560,9 +569,12 @@ class Model():
 					# this is the paper
 					hs = fw_hs+bw_hs 
 					ls = fw_ls.h+bw_ls.h # 사용하지않음
-				# hs : Tensor("dan/reader/text/add:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)
+				
+				# hs : Tensor("dan/reader/text/add:0", shape=(?, ?, 512), dtype=float32, device=/device:GPU:0)				
+				#	(?, ?, 512)
+				# 그래서, lstm - 입력값과 결과값 dimension(?, ?, 512)이 같은듯
+				
 				# addition, same as the paper
-
 				#lq = tf.concat([fw_lq.h,bw_lq.h],1) #LSTM CELL
 				#lq = tf.concat([fw_lq,bw_lq],1) # GRU
 
@@ -859,19 +871,35 @@ class Model():
 
 		for i in xrange(len(data)):
 			if is_train:
-				pos,neg = data[i]
-				imgid_pos,sent_pos,sent_c_pos = pos
-				imgid_neg,sent_neg,sent_c_neg = neg
+				
+				pos, neg = data[i]
+				# pos과 neg의 pair 정보 
+				# 	참고) 할때마다 random이어서 값이 다르게 나옴
+				# # data[i] : (('2603792708', ['a', 'bunch', 'of', 'people', 'on', 'the', 'beach', 'at', 'sunset', '.'], [['a'], ['b', 'u', 'n', 'c', 'h'], ['o', 'f'], ['p', 'e', 'o', 'p', 'l', 'e'], ['o', 'n'], ['t', 'h', 'e'], ['b', 'e', 'a', 'c', 'h'], ['a', 't'], ['s', 'u', 'n', 's', 'e', 't'], ['.']]), ('3827402648', ['the', 'proud', 'dog', 'returns', 'with', 'the', 'toy', 'it', 'fetched', '.'], [['t', 'h', 'e'], ['p', 'r', 'o', 'u', 'd'], ['d', 'o', 'g'], ['r', 'e', 't', 'u', 'r', 'n', 's'], ['w', 'i', 't', 'h'], ['t', 'h', 'e'], ['t', 'o', 'y'], ['i', 't'], ['f', 'e', 't', 'c', 'h', 'e', 'd'], ['.']]))
+				# pos       : ('2603792708', ['a', 'bunch', 'of', 'people', 'on', 'the', 'beach', 'at', 'sunset', '.'], [['a'], ['b', 'u', 'n', 'c', 'h'], ['o', 'f'], ['p', 'e', 'o', 'p', 'l', 'e'], ['o', 'n'], ['t', 'h', 'e'], ['b', 'e', 'a', 'c', 'h'], ['a', 't'], ['s', 'u', 'n', 's', 'e', 't'], ['.']])
+				# nega      : ('3827402648', ['the', 'proud', 'dog', 'returns', 'with', 'the', 'toy', 'it', 'fetched', '.'], [['t', 'h', 'e'], ['p', 'r', 'o', 'u', 'd'], ['d', 'o', 'g'], ['r', 'e', 't', 'u', 'r', 'n', 's'], ['w', 'i', 't', 'h'], ['t', 'h', 'e'], ['t', 'o', 'y'], ['i', 't'], ['f', 'e', 't', 'c', 'h', 'e', 'd'], ['.']])
+				
+				imgid_pos, sent_pos, sent_c_pos = pos
+				# imgid_pos  : 2603792708
+				# sent_pos   : ['a', 'bunch', 'of', 'people', 'on', 'the', 'beach', 'at', 'sunset', '.']
+				# sent_c_pos : [['a'], ['b', 'u', 'n', 'c', 'h'], ['o', 'f'], ['p', 'e', 'o', 'p', 'l', 'e'], ['o', 'n'], ['t', 'h', 'e'], ['b', 'e', 'a', 'c', 'h'], ['a', 't'], ['s', 'u', 'n', 's', 'e', 't'], ['.']]
+				
+				imgid_neg, sent_neg, sent_c_neg = neg
+				# 위와 마찬가지
 
-				pis[i] = imgid2idx[imgid_pos]
+				pis[i]    = imgid2idx[imgid_pos]
+				# imageid > imgid_pos : 2603792708
+				# idx > imgid2idx[imgid_pos], pis[i]    = 493 
 				pis_neg[i] = imgid2idx[imgid_neg]
 
 				for j in xrange(len(sent_pos)):
 					if j == config.max_sent_size:
 						break
-					wordIdx = get_word(sent_pos[j])
-					sents[i,j] = wordIdx
+					wordIdx         = get_word(sent_pos[j])
+					sents[i,j]      = wordIdx
 					sents_mask[i,j] = True
+					# sent_pos[i] > word
+					
 
 				for j in xrange(len(sent_c_pos)):
 					if j == config.max_sent_size:
