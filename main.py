@@ -467,7 +467,7 @@ def load_feats(imgid2idx,shared,config):
 	image_feats = np.zeros([len(imgid2idx)] + config.feat_dim,dtype="float32")
 	for imgid in imgid2idx: # fill each idx with feature, -> pid
 
-		if shared['imgid2feat'] is None:
+		if shared['imgid2feat'] is None: # shared['imgid2feat'] = None, file type load
 			"""
 			# load feature online
 			assert shared['featpath'] is not None
@@ -478,6 +478,8 @@ def load_feats(imgid2idx,shared,config):
 				if len(shared['featCache']) <= shared['cacheSize']:
 					shared['featCache'][imgid] = feat
 			"""
+			# local conv featue file path = os.path.join(shared['featpath'],"%s.npy"%imgid)
+			# 	ex) resnet-152/523488750.npy
 			feat = np.load(os.path.join(shared['featpath'],"%s.npy"%imgid))
 		else:
 			feat = shared['imgid2feat'][imgid]
@@ -678,6 +680,7 @@ def train(config):
 				
 			# load the actual image feature matrix
 			image_feats = load_feats(imgid2idx,train_data.shared,config)
+			
 			mining_batch = {}
 			mining_batch['imgs'] = [one[0] for one in alldata]
 			mining_batch['imgid2idx'] = imgid2idx
