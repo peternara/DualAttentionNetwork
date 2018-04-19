@@ -779,7 +779,7 @@ class Model():
 		if not is_train:
 			NP = len(batch.data['imgs'])
 		
-		J = config.max_sent_size
+		J = config.max_sent_size # 86
 		
 		VW = config.word_vocab_size
 		VC = config.char_vocab_size
@@ -815,12 +815,11 @@ class Model():
 		feed_dict[self.pis] = pis
 		
 		if is_train:
-
-			sents_neg = np.zeros([N,J],dtype='int32')
-			sents_neg_c = np.zeros([N,J,W],dtype="int32")
+			sents_neg      = np.zeros([N,J],dtype='int32')
+			sents_neg_c    = np.zeros([N,J,W],dtype="int32")
 			sents_neg_mask = np.zeros([N,J],dtype="bool")
 
-			pis_neg = np.zeros([NP],dtype='int32')
+			pis_neg        = np.zeros([NP],dtype='int32')
 
 			feed_dict[self.sents_neg] = sents_neg
 			feed_dict[self.sents_neg_c] = sents_neg_c
