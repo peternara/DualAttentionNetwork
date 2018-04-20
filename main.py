@@ -554,6 +554,13 @@ def train(config):
 	# this will take a long time when vocab_size is 6k
 	if not config.no_wordvec: # config.no_wordvec is True : 따라서, 여긴 진행하진 않는다.
 		config.emb_mat = np.array([idx2vec_dict[idx] if idx2vec_dict.has_key(idx) else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size)) for idx in xrange(config.word_vocab_size)],dtype="float32") 
+		# for idx in xrange(config.word_vocab_size):
+                #	if idx2vec_dict.has_key(idx)
+                #	else: np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
+                #	print idx, idx2vec_dict.has_key(idx) # idx:11567, idx2vec_dict.has_key(idx)
+		#		, False 이면 밑의 random 초기화 변수를 선택한다.
+                #	print np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
+                #	print idx2vec_dict[idx]	
 
 	# from model import get_model	
 	model = get_model(config) # construct model under gpu0
