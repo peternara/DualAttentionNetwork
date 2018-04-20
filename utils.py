@@ -46,43 +46,19 @@ class Dataset():
 	"""
 	# subset for validation
 	def __init__(self,data,datatype,shared=None,is_train=True,imgfeat_dim=None):
-		self.data = data # data is a dict  {"data":[],"sentids":[],"imgids":[],"sentid2data"}, 
+		self.data     = data # data is a dict  {"data":[],"sentids":[],"imgids":[],"sentid2data"}, 
 		self.datatype = datatype
-		self.shared = shared
+		self.shared   = shared
 		self.is_train = is_train
+		
+		# self.shared['imgid2feat'] = None
 		if self.shared['imgid2feat'] is not None:
 			self.imgfeat_dim = list(self.shared['imgid2feat'][self.shared['imgid2feat'].keys()[0]].shape) # it could be (1536) or conv feature (8,8,1536)
 		else:
 			assert imgfeat_dim is not None
 			self.imgfeat_dim = imgfeat_dim
 
-		#self.data_list = []
-		#if not is_train:
-			# not train, then should generate full composition of 1000 imageid to 5000 sentids
-			# full 1000 takes 20 minutes with batch_size 512 
-			# 100 takes 37 seconds with batch_size 64
-			# 300 takes 4 minutes with batch_size 64
-			# 200 takes 2 minutes with batch_size 64
-			#for i in xrange(len(self.data['imgids'])):
-		"""
-			if subset:
-				subs = 400
-				#subs = 2
-				subs_t = subs*5
-				for i in xrange(subs):
-					for j in xrange(subs_t):
-						self.data_list.append((i,j))
-			else:
-				for i in xrange(len(self.data['imgids'])):
-					for j in xrange(len(self.data['sentids'])):
-						self.data_list.append((i,j))
-		"""
-		#else:
-		#	self.data_list = self.data['data']
-
-
-		self.valid_idxs = range(len(self.data['data'])) #(imgid,si,csi) or (si,csi)
-
+		self.valid_idxs   = range(len(self.data['data'])) #(imgid,si,csi) or (si,csi)
 		self.num_examples = len(self.valid_idxs)
 
 
@@ -93,39 +69,7 @@ class Dataset():
 		# if it is for training, will also sample negative
 		out = {"data":[]}
 		
-		if self.is_train:
-			"""
-			# get the idx remaining for sampling
-			neg_pool = [idx for idx in self.valid_idxs if idx not in idxs]		 
-			
-			neg_sampled = random.sample(neg_pool,len(idxs)) 
-			#neg_pool = [idx for idx in self.valid_idxs if idx not in idxs and not pos_img_ids.has_key(self.data['data'][idx][0])]
-			# this sampling has potential problem? negative are paired?
-
-			# randomly decide to flip the whole batch during training
-			flip = False
-			#ran = random.random()
-			#if ran > 0.9:
-			#	flip=True
-
-			out["flip"] = flip
-
-			#out = defaultdict(list) # so the initial value is a list
-			for i in xrange(len(idxs)):
-				pos_idx,neg_idx = idxs[i],neg_sampled[i]
-				thisPos = self.data['data'][pos_idx]
-				thisNeg = self.data['data'][neg_idx] #(imgid,sent,sent_c)
-				# so for training, each batch item is ((imgid,sent,sent_c),(neg_imgid,neg_sent,neg_c))
-				# not using the pair with the sample image
-				assert thisPos[0] != thisNeg[0]:
-
-				data = (thisPos,thisNeg)
-				out['data'].append(data)
-				#out['sentids'].append(self.data['sentids'][idxs[i]])
-			# replace some negative image id to decouple them?
-			#print out['data'][-100:]
-			"""
-
+		if self.is_train:			
 			# now we return 128 pos pair and 128 neg pair, pos-neg pair will be done on the fly
 			out['pos'] = []
 			out['neg'] = []
