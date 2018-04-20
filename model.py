@@ -441,7 +441,7 @@ class Model():
 					xsents = conv1d(Asents_c,filter_size,filter_height,config.keep_prob,self.is_train,wd=config.wd,scope="conv1d")
 					tf.get_variable_scope().reuse_variables()
 					xsents_neg = conv1d(Asents_neg_c,filter_size,filter_height,config.keep_prob,self.is_train,wd=config.wd,scope="conv1d")
-					
+				
 					
 			# word stuff
 			with tf.variable_scope('word'):
@@ -498,12 +498,14 @@ class Model():
 				# Tensor("dan/emb/image/strided_slice:0", shape=(), dtype=int32, device=/device:GPU:0)
 				NP = tf.shape(self.pis)[0] 
 				
-				# 주의) xpis(=pos) vs xpis_neg(=neg) 구분하는데 같은 데이터(self.image_emb_mat)를 집어넣음.
-				# self.image_emb_mat : Tensor("dan/image_emb_mat:0", shape=(?, 14, 14, 2048), dtype=float32, device=/device:GPU:0)
-				# self.pis           : Tensor("dan/pis:0", shape=(?,), dtype=int32, device=/device:GPU:0)
+				# 주의) xpis(=pos) vs xpis_neg(=neg) 구분하는데 같은 데이터(self.image_emb_mat)를 집어넣음.				
+				# self.pis           : (?,)
+				# self.image_emb_mat : (?, 14, 14, 2048)
+				# xpis               : (?, 14, 14, 2048)
 				xpis     = tf.nn.embedding_lookup(self.image_emb_mat,self.pis)							
 				# self.pis_neg: Tensor("dan/pis_neg:0", shape=(?,), dtype=int32, device=/device:GPU:0)
 				xpis_neg = tf.nn.embedding_lookup(self.image_emb_mat,self.pis_neg)
+				# 
 					
 				# self.idim = [14, 14, 2048]
 				# 그래서 [-1]은 마지막 여기선 [2] = 2048
