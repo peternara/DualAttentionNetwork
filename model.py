@@ -361,7 +361,9 @@ class Model():
 
 		
 		# feed in the pretrain word vectors for all batch
-		# config.word_emb_size = 512
+		# [None, config.word_emb_size]
+		#  None = voc size 인듯 
+		# config.word_emb_size = 512 
 		self.existing_emb_mat = tf.placeholder('float',[None, config.word_emb_size], name="pre_emb_mat")
 
 		# feed in the image feature for this batch
@@ -394,6 +396,7 @@ class Model():
 		N  = self.N
 		
 		# VW = 11798, word_vocab_size 
+		#	utils.py - config.word_vocab_size = len(datasets[0].shared['word2idx'])
 		# VC = 47, char_vocab_size 
 		# W  = 16, max_word_size    
 		# N  = None, batch size
@@ -795,9 +798,14 @@ class Model():
 		
 		VW = config.word_vocab_size
 		VC = config.char_vocab_size
-		d = config.hidden_size
-		W = config.max_word_size
+		d  = config.hidden_size
+		W  = config.max_word_size
 
+		# batch 데이터 구성
+		# batch.data['data']              
+                #       batch.data['data']  > ['pos'],['neg'] 
+                #  batch_data['imgidx2feat'] = image_feats # 최상위
+                #  batch_data['imgid2idx']    = imgid2idx # 최상위
 		if is_train:
 			new_J = 0
 			for pos,neg in batch.data['data']:
@@ -843,14 +851,22 @@ class Model():
 			feed_dict[self.sents_neg_mask] = sents_neg_mask
 			feed_dict[self.pis_neg]        = pis_neg
 			
-
+		# define : self.image_emb_mat = tf.placeholder("float",[None]+config.imgfeat_dim,name="image_emb_mat")
 		feed_dict[self.image_emb_mat] = batch.data['imgidx2feat']
-
+		# batch.data['imgidx2feat']
+		#	[idx] 단위의 [14,14,2049] dim을 가진 image feautre(conv)
+		# for idx, v in enumerate(batch.data['imgidx2feat']):                       
+                #        print idx - idx - image id is not
+                #        print v   - image feature [14,14,2049]
+	
 		feed_dict[self.is_train] = is_train
 
 		
 		# this could be empty, when finetuning or not using pretrain word vectors
-		if not config.finetune_wordvec and not config.no_wordvec:
+		# config.finetune_wordvec = False 
+		# config.no_wordvec       = True
+		if not config.finetune_wordvec and not config.no_wordvec: # 패스~
+			# self.existing_emb_mat = tf.placeholder('float',[None, config.word_emb_size], name="pre_emb_mat")
 			feed_dict[self.existing_emb_mat] = batch.shared['existing_emb_mat']
 
 
@@ -870,14 +886,39 @@ class Model():
 			if d.has_key(char):
 				return d[char]
 			return 1
+		
+		# batch 데이터 구성
+		# batch.data['data']              
+                #       batch.data['data']  > ['pos'],['neg'] 
+                #  batch_data['imgidx2feat'] = image_feats # 최상위
+                #  batch_data['imgid2idx']    = imgid2idx # 최상위
+		#
+		# more detail
+		#for v, a in enumerate(batch.data):
+                #       print v, a
+                # 0 imgs > batch.data['imgs']
+                # 1 data > batch.data['data']
+                # 2 imgid2idx > batch.data['imgid2idx']
+                # 3 imgidx2feat > batch.data['imgidx2feat'] 식으로 사용할 수 있다.
+ 				
+		data      = batch.data['data']
+		# 주의) 학습과 테스트셋과의 batch 정보가 틀리니, 학습셋은 pos, neg 로구성
+		# for v, a in enumerate(batch.data['data']):
+                #       print '--'
+                #       print v, a
+		#       테스트셋이라면, 쌍이아닌 이미지 id가 없는(sentence_word, sentence_word_char)  
+                #       	505 (['a', 'couple', 'standing', 'in', 'the', 'outdoors', 'embracing', 'and', 'looking', 'over', 'the', 'land', '.'], [['a'], ['c', 'o', 'u', 'p', 'l', 'e'], ['s', 't', 'a', 'n', 'd', 'i', 'n', 'g'], ['i', 'n'], ['t', 'h', 'e'], ['o', 'u', 't', 'd', 'o', 'o', 'r', 's'], ['e', 'm', 'b', 'r', 'a', 'c', 'i', 'n', 'g'], ['a', 'n', 'd'], ['l', 'o', 'o', 'k', 'i', 'n', 'g'], ['o', 'v', 'e', 'r'], ['t', 'h', 'e'], ['l', 'a', 'n', 'd'], ['.']])
+		#	학습셋이라면, 쌍(pos, neg) >   pos(imageid, sentence_word, sentence_word_char), neg(imageid, sentence_word, sentence_word_char)
+                #       255 (('126772535', ['man', 'with', 'goggles', 'and', 'robe', 'pouring', 'items', 'from', 'glass', 'and', 'boy', 'looks', 'on'], [['m', 'a', 'n'], ['w', 'i', 't', 'h'], ['g', 'o', 'g', 'g', 'l', 'e', 's'], ['a', 'n', 'd'], ['r', 'o', 'b', 'e'], ['p', 'o', 'u', 'r', 'i', 'n', 'g'], ['i', 't', 'e', 'm', 's'], ['f', 'r', 'o', 'm'], ['g', 'l', 'a', 's', 's'], ['a', 'n', 'd'], ['b', 'o', 'y'], ['l', 'o', 'o', 'k', 's'], ['o', 'n']]),
+		#	     ('2068556363', ['a', 'group', 'of', 'friends', 'sit', 'around', 'a', 'table', 'in', 'front', 'of', 'a', 'flat', 'screen', 'tv', '.'], [['a'], ['g', 'r', 'o', 'u', 'p'], ['o', 'f'], ['f', 'r', 'i', 'e', 'n', 'd', 's'], ['s', 'i', 't'], ['a', 'r', 'o', 'u', 'n', 'd'], ['a'], ['t', 'a', 'b', 'l', 'e'], ['i', 'n'], ['f', 'r', 'o', 'n', 't'], ['o', 'f'], ['a'], ['f', 'l', 'a', 't'], ['s', 'c', 'r', 'e', 'e', 'n'], ['t', 'v'], ['.']]))
 
-		data = batch.data['data']
-		imgid2idx = batch.data['imgid2idx']
+		imgid2idx = batch.data['imgid2idx']	
+		
 
 		for i in xrange(len(data)):
 			if is_train:
 				
-				pos, neg = data[i]
+				pos, neg = data[i] 
 				# pos과 neg의 pair 정보 
 				# 	참고) 할때마다 random이어서 값이 다르게 나옴
 				# # data[i] : (('2603792708', ['a', 'bunch', 'of', 'people', 'on', 'the', 'beach', 'at', 'sunset', '.'], [['a'], ['b', 'u', 'n', 'c', 'h'], ['o', 'f'], ['p', 'e', 'o', 'p', 'l', 'e'], ['o', 'n'], ['t', 'h', 'e'], ['b', 'e', 'a', 'c', 'h'], ['a', 't'], ['s', 'u', 'n', 's', 'e', 't'], ['.']]), ('3827402648', ['the', 'proud', 'dog', 'returns', 'with', 'the', 'toy', 'it', 'fetched', '.'], [['t', 'h', 'e'], ['p', 'r', 'o', 'u', 'd'], ['d', 'o', 'g'], ['r', 'e', 't', 'u', 'r', 'n', 's'], ['w', 'i', 't', 'h'], ['t', 'h', 'e'], ['t', 'o', 'y'], ['i', 't'], ['f', 'e', 't', 'c', 'h', 'e', 'd'], ['.']]))
@@ -903,8 +944,11 @@ class Model():
 					wordIdx         = get_word(sent_pos[j])
 					sents[i,j]      = wordIdx
 					sents_mask[i,j] = True
-					# sent_pos[i] > word
-					
+					# sent_pos[i] > word	
+					# print sent_pos[j] # a, word
+                                        # print wordIdx     # 8195, idx
+                                        # print sents[i,j]  # 8195, idx
+                                        # print sents_mask[i,j] # True, existed word(i,j) = True
 
 				for j in xrange(len(sent_c_pos)):
 					if j == config.max_sent_size:
