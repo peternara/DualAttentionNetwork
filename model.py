@@ -830,14 +830,14 @@ class Model():
 		sents_c    = np.zeros([N,J,W],dtype="int32")
 		sents_mask = np.zeros([N,J],dtype="bool")
 
-		pis = np.zeros([NP],dtype='int32')			
+		pis        = np.zeros([NP],dtype='int32')			
 
 		# link the feed_dict
 		feed_dict[self.sents]      = sents
 		feed_dict[self.sents_c]    = sents_c
 		feed_dict[self.sents_mask] = sents_mask
 
-		feed_dict[self.pis] = pis
+		feed_dict[self.pis]        = pis
 		
 		if is_train:
 			sents_neg      = np.zeros([N,J],dtype='int32')
@@ -850,6 +850,15 @@ class Model():
 			feed_dict[self.sents_neg_c]    = sents_neg_c
 			feed_dict[self.sents_neg_mask] = sents_neg_mask
 			feed_dict[self.pis_neg]        = pis_neg
+			
+		# 주의) batch.data['imgidx2feat'] & batch.data['data'] = image feature vs sentence feature
+		#	print batch.data['imgidx2feat'].shape
+		#	print len(batch.data['data']).shape
+		# is training 
+		# 	(511, 14, 14, 2048) vs 256
+		# is not training
+		#	(512, 14, 14, 2048) vs 512
+		# ** 학습할 때, 256 이유는 pos & neg로 나누어져서 한 pair를 이루는
 			
 		# define : self.image_emb_mat = tf.placeholder("float",[None]+config.imgfeat_dim,name="image_emb_mat")
 		feed_dict[self.image_emb_mat] = batch.data['imgidx2feat']
