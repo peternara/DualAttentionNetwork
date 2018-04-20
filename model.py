@@ -801,27 +801,32 @@ class Model():
 		if is_train:
 			new_J = 0
 			for pos,neg in batch.data['data']:
-				new_J = max([new_J,len(pos[1]),len(neg[1])])
-			J = min(new_J,J)
+				# pos & neg : ('7632093958', ['a', 'woman', 'and', 'a', 'child', 'holding', 'on', 'to', 'the', 'railing', 'while', 'on', 'trolley', '.'], [['a'], ['w', 'o', 'm', 'a', 'n'], ['a', 'n', 'd'], ['a'], ['c', 'h', 'i', 'l', 'd'], ['h', 'o', 'l', 'd', 'i', 'n', 'g'], ['o', 'n'], ['t', 'o'], ['t', 'h', 'e'], ['r', 'a', 'i', 'l', 'i', 'n', 'g'], ['w', 'h', 'i', 'l', 'e'], ['o', 'n'], ['t', 'r', 'o', 'l', 'l', 'e', 'y'], ['.']])
+				# 	(image, sentence_word, sentence_word_char)
+				new_J = max( [new_J, len(pos[1]), len(neg[1])] )
+			J = min(new_J, J)
 		else:
 			new_J = 0
 			for data in batch.data['data']:
+				# 주의) test 경우, image id가 없는경우
+				# data    : (['an', 'older', 'gentleman', 'stands', 'along', 'the', 'shore', 'of', 'an', 'immense', 'lake', 'with', 'a', 'cityscape', 'across', 'the', 'water', '.'], [['a', 'n'], ['o', 'l', 'd', 'e', 'r'], ['g', 'e', 'n', 't', 'l', 'e', 'm', 'a', 'n'], ['s', 't', 'a', 'n', 'd', 's'], ['a', 'l', 'o', 'n', 'g'], ['t', 'h', 'e'], ['s', 'h', 'o', 'r', 'e'], ['o', 'f'], ['a', 'n'], ['i', 'm', 'm', 'e', 'n', 's', 'e'], ['l', 'a', 'k', 'e'], ['w', 'i', 't', 'h'], ['a'], ['c', 'i', 't', 'y', 's', 'c', 'a', 'p', 'e'], ['a', 'c', 'r', 'o', 's', 's'], ['t', 'h', 'e'], ['w', 'a', 't', 'e', 'r'], ['.']])
+				# data[0] : ['an', 'older', 'gentleman', 'stands', 'along', 'the', 'shore', 'of', 'an', 'immense', 'lake', 'with', 'a', 'cityscape', 'across', 'the', 'water', '.']
 				new_J = max([new_J,len(data[0])])
-			J = min(new_J,J)
+			J = min(new_J, J)
 
 		feed_dict = {}
 
 		# initial all the placeholder
 		# all words initial is 0 , means -NULL- token
-		sents = np.zeros([N,J],dtype='int32')
-		sents_c = np.zeros([N,J,W],dtype="int32")
+		sents      = np.zeros([N,J],dtype='int32')
+		sents_c    = np.zeros([N,J,W],dtype="int32")
 		sents_mask = np.zeros([N,J],dtype="bool")
 
 		pis = np.zeros([NP],dtype='int32')			
 
 		# link the feed_dict
-		feed_dict[self.sents] = sents
-		feed_dict[self.sents_c] = sents_c
+		feed_dict[self.sents]      = sents
+		feed_dict[self.sents_c]    = sents_c
 		feed_dict[self.sents_mask] = sents_mask
 
 		feed_dict[self.pis] = pis
@@ -833,10 +838,10 @@ class Model():
 
 			pis_neg        = np.zeros([NP],dtype='int32')
 
-			feed_dict[self.sents_neg] = sents_neg
-			feed_dict[self.sents_neg_c] = sents_neg_c
+			feed_dict[self.sents_neg]      = sents_neg
+			feed_dict[self.sents_neg_c]    = sents_neg_c
 			feed_dict[self.sents_neg_mask] = sents_neg_mask
-			feed_dict[self.pis_neg] = pis_neg
+			feed_dict[self.pis_neg]        = pis_neg
 			
 
 		feed_dict[self.image_emb_mat] = batch.data['imgidx2feat']
