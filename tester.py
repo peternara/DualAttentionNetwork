@@ -9,8 +9,10 @@ class Tester():
 	def __init__(self,model,config,sess=None):
 		self.config = config
 		self.model = model
-
-		self.z_u = self.model.z_u # the output of the embedding for text
+		
+		# (?, 3, hidden_size) 
+		# 주의) word_emb_size가 아니다
+		self.z_u = self.model.z_u # the output of the embedding for text		
 		self.z_v = self.model.z_v # the output of the embedding for images
 
 
