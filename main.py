@@ -647,7 +647,7 @@ def train(config):
 				val_perf.append(evalperf)
 				
 			# 여기는 모든 데이터 정보로부터 batch단위로 재구성한다.
-			batchIdx,batch_data = batch
+			batchIdx, batch_data = batch
 			batch_data = batch_data.data
 			# each batch is ['pos'],['neg']
 			# hard negative mining
@@ -688,18 +688,22 @@ def train(config):
 			# 	conv image feature file load
 			image_feats = load_feats(imgid2idx,train_data.shared,config)
 			
+			# only 학습셋이 아니라 테스트셋을 위한 재구축을 위한 batch
+			# 	: alldata = batch_data['pos'] + batch_data['neg'] 
 			mining_batch                = {}
 			mining_batch['imgs']        = [one[0] for one in alldata] # image ids
 			mining_batch['imgid2idx']   = imgid2idx
 			mining_batch['imgidx2feat'] = image_feats
-			mining_batch['data']        = [(one[1],one[2]) for one in alldata] # a list of (sentence_word, sentence_word_char)
 			
+			# image id를  제외시킨 데이터 = a list of (sentence_word, sentence_word_char)
+			mining_batch['data']        = [(one[1],one[2]) for one in alldata]
+			
+			# harg negative sample를 구하기 위한 작업
 			# mining_batch, N_pos+N_neg
-			z_u, z_v = tester.step(sess,(batchIdx,Dataset(mining_batch,"test",shared=train_data.shared,is_train=False,imgfeat_dim=config.feat_dim)))
+			z_u, z_v = tester.step(sess,(batchIdx,Dataset(mining_batch, "test", shared=train_data.shared, is_train=False, imgfeat_dim=config.feat_dim)))
 			# z_u : the output of the embedding for text, (512, 3, 512)
 			#	2번째 dimension(=3)의 의미가 모지??
-			# z_v : the output of the embedding for images, (512, 3, 512)
-			
+			# z_v : the output of the embedding for images, (512, 3, 512)		
 			
 			assert len(z_u) == len(z_v),(len(z_u),len(z_v))
 			z_u_pos = z_u[:len(batch_data['pos'])]
@@ -717,24 +721,8 @@ def train(config):
 			neg_idxs  = range(len(z_u_neg)) # 256
 			# neg_idxs > [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255]
 			
-			for i in xrange(len(batch_data['pos'])):
-				"""
-				pos_img_vec = z_v_pos[i] # [hop+1,d]
-				check_neg_idxs = random.sample(neg_idxs,check_num)
-				simis = np.zeros(check_num,dtype="float")
-				for j,check_neg_idx in enumerate(check_neg_idxs):
-					neg_sent_vec = z_u_neg[check_neg_idx]
-					simis[j] = np.sum(pos_img_vec*neg_sent_vec)
-				posimg2negsentIdxs[i] = check_neg_idxs[np.argmax(simis)]
-
-				pos_sent_vec = z_v_pos[i] # [hop+1,d]
-				check_neg_idxs = random.sample(neg_idxs,check_num)
-				simis = np.zeros(check_num,dtype="float")
-				for j,check_neg_idx in enumerate(check_neg_idxs):
-					neg_img_vec = z_v_neg[check_neg_idx]
-					simis[j] = np.sum(pos_sent_vec*neg_img_vec)
-				possent2negimgIdxs[i] = check_neg_idxs[np.argmax(simis)]
-				"""
+			# harg negative sample를 구하기 위한 작업
+			for i in xrange(len(batch_data['pos'])):				
 				pos_img_vec = z_v_pos[i] # [hop+1,d]
 				pos_sent_vec = z_v_pos[i] # [hop+1,d]
 				check_neg_idxs = random.sample(neg_idxs,check_num)
