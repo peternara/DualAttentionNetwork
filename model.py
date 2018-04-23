@@ -438,7 +438,7 @@ class Model():
 				filter_height = 5
 				#[N,J,cwdim]
 				with tf.variable_scope("conv"):
-					xsents = conv1d(Asents_c,filter_size,filter_height,config.keep_prob,self.is_train,wd=config.wd,scope="conv1d")
+					xsents     = conv1d(Asents_c,filter_size,filter_height,config.keep_prob,self.is_train,wd=config.wd,scope="conv1d")
 					tf.get_variable_scope().reuse_variables()
 					xsents_neg = conv1d(Asents_neg_c,filter_size,filter_height,config.keep_prob,self.is_train,wd=config.wd,scope="conv1d")
 				
@@ -465,9 +465,10 @@ class Model():
 						word_emb_mat = tf.concat([word_emb_mat,self.existing_emb_mat],0)
 
 				#[N,J,wdim]
-				# word_emb_mat   = <tf.Variable 'emb/word/var/word_emb_mat:0' shape=(11798, 512) dtype=float32_ref>
-				# self.sents     = Tensor("dan/sents:0", shape=(?, ?), dtype=int32, device=/device:GPU:0)
-				# self.sents_neg = Tensor("dan/sents_neg:0", shape=(?, ?), dtype=int32, device=/device:GPU:0)
+				# word_emb_mat   = (11798, 512)
+				# self.sents     = (?, ?)
+				# self.sents_neg = (?, ?)
+				# Asents         = (?, ?, 512)
 				Asents = tf.nn.embedding_lookup(word_emb_mat,self.sents)	
 				# 여기서 이해안가는게 있는데 sents=입력값(?, ?) 이건데 갑자기 Asents=아웃풋(?, ?, 512)이 이걸로 변환된 이유는 ??
 				#	word_emb_mat과 관련되어 보이는데 위에서 보듯이 dim이 다르다.
