@@ -589,7 +589,9 @@ def train(config):
 		str_ = "total parameters: %s"%(totalParam)
 		print str_
 		self_summary_strs.append(str_)
-
+		
+		# config.load = False
+		# config.load_best = False		
 		initialize(load=config.load,load_best=config.load_best,model=model,config=config,sess=sess)
 
 		# the total step (iteration) the model will run
