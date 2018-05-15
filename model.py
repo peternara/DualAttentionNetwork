@@ -767,7 +767,7 @@ class Model():
 		# s -> (v,u)
 		# s_v_neg -> (v_neg,u)
 		# s_u_neg -> (v,u_neg)
-		m = self.config.margin
+		m = self.config.margin # 100 - paper is 100
 		losses = tf.maximum(0.0,m-self.s+self.s_v_neg) + tf.maximum(0.0,m-self.s+self.s_u_neg) #[N]
 
 		losses = tf.reduce_mean(losses)
