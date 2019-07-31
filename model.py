@@ -334,6 +334,7 @@ class Model():
 		# config.word_emb_size 은 주어진값이(param) = 152 
 		# ??? 왜 주어지는지 궁금함..
 		#      > w2v같은것을 안써서...one-hot vector일텐데...one-hot dim은 word의 크기아닌가..[0, 0, 0, 1] 전체 단어의 사전크기가 4일때...
+		#      > voc size만큰의 512차원으로 만들고 (woc sizex512) 초기에 랜던값을 채워넣는방식임.> 밑에...
 		self.cd, self.wd, self.cwd = config.char_emb_size,config.word_emb_size,config.char_out_size
 		# self.cd = 8 , char_emb_size
 		# self.wd = 512 , word_emb_size
