@@ -455,7 +455,8 @@ class Model():
 					if config.is_train: # True
 						# for new word
 						if config.no_wordvec: # True
-							# [VW, wdim] = [11798, 512] = [word_vocab_size, word_emb_size]
+							# [VW, wdim] = [11798, 512] = [word_vocab_size, word_emb_size] 
+							# word의 사전값들을 랜덤값 수로 초기에 넣어버림, w2v이 없으니...근데 이게 랜덤값으로 가면 되는구나.....?? 신기하다....
 							word_emb_mat = tf.get_variable("word_emb_mat",dtype="float",shape=[VW, wdim],initializer=tf.truncated_normal_initializer(stddev=1.0))
 						else:
 							word_emb_mat = tf.get_variable("word_emb_mat",dtype="float",shape=[VW,wdim],initializer=get_initializer(config.emb_mat)) # it's just random initialized, but will include glove if finetuning
