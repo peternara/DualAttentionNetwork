@@ -952,7 +952,7 @@ class Model():
 					if j == config.max_sent_size:
 						break
 					wordIdx         = get_word(sent_pos[j])
-					sents[i,j]      = wordIdx
+					sents[i,j]      = wordIdx # i 번째 문장의 j번째 단어의 index(=wordIdx) 
 					sents_mask[i,j] = True
 					# sent_pos[i] > word	
 					# print sent_pos[j] # a, word
